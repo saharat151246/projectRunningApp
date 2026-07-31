@@ -1,0 +1,138 @@
+import 'dart:convert';
+import 'package:flutter/foundation.dart';
+import 'package:http/http.dart' as http;
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'api_config.dart';
+
+/// ผลลัพธ์จากการเรียก Auth API - ใช้บอกหน้าจอว่าสำเร็จหรือไม่ และข้อความ error คืออะไร
+class AuthResult {
+  final bool success;
+  final String? errorMessage;
+  AuthResult({required this.success, this.errorMessage});
+}
+
+/// จัดการ Authentication ทั้งหมด: เรียก API, เก็บ JWT token อย่างปลอดภัย,
+/// และเก็บสถานะผู้ใช้ปัจจุบันให้ทั้งแอปเข้าถึงได้
+class AuthService extends ChangeNotifier {
+  AuthService._();
+  static final AuthService instance = AuthService._();
+
+  static const _storage = FlutterSecureStorage();
+  static const _tokenKey = 'auth_token';
+
+  String? _token;
+  Map<String, dynamic>? currentUser;
+
+  bool get isLoggedIn => _token != null;
+  String? get token => _token;
+
+  /// เรียกตอนเปิดแอป (Splash) เพื่อเช็คว่ามี session ค้างอยู่ไหม
+  Future<bool> tryAutoLogin() async {
+    final saved = await _storage.read(key: _tokenKey);
+    if (saved == null) return false;
+
+    _token = saved;
+    final ok = await fetchMe();
+    if (!ok) {
+      // token หมดอายุหรือไม่ถูกต้อง ล้างทิ้ง
+      await logout();
+      return false;
+    }
+    return true;
+  }
+
+  Future<AuthResult> register({
+    required String name,
+    required String email,
+    required String password,
+  }) async {
+    try {
+      final res = await http
+          .post(
+            Uri.parse('${ApiConfig.baseUrl}/auth/register'),
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode({'name': name, 'email': email, 'password': password}),
+          )
+          .timeout(const Duration(seconds: 12));
+
+      final data = jsonDecode(res.body) as Map<String, dynamic>;
+
+      if (res.statusCode == 201) {
+        _token = data['token'] as String;
+        currentUser = data['user'] as Map<String, dynamic>;
+        await _storage.write(key: _tokenKey, value: _token);
+        notifyListeners();
+        return AuthResult(success: true);
+      }
+      return AuthResult(success: false, errorMessage: data['message']?.toString());
+    } catch (e) {
+      return AuthResult(success: false, errorMessage: _friendlyError(e));
+    }
+  }
+
+  Future<AuthResult> login({
+    required String email,
+    required String password,
+  }) async {
+    try {
+      final res = await http
+          .post(
+            Uri.parse('${ApiConfig.baseUrl}/auth/login'),
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode({'email': email, 'password': password}),
+          )
+          .timeout(const Duration(seconds: 12));
+
+      final data = jsonDecode(res.body) as Map<String, dynamic>;
+
+      if (res.statusCode == 200) {
+        _token = data['token'] as String;
+        currentUser = data['user'] as Map<String, dynamic>;
+        await _storage.write(key: _tokenKey, value: _token);
+        notifyListeners();
+        return AuthResult(success: true);
+      }
+      return AuthResult(success: false, errorMessage: data['message']?.toString());
+    } catch (e) {
+      return AuthResult(success: false, errorMessage: _friendlyError(e));
+    }
+  }
+
+  Future<bool> fetchMe() async {
+    if (_token == null) return false;
+    try {
+      final res = await http.get(
+        Uri.parse('${ApiConfig.baseUrl}/auth/me'),
+        headers: {'Authorization': 'Bearer $_token'},
+      ).timeout(const Duration(seconds: 12));
+
+      if (res.statusCode == 200) {
+        final data = jsonDecode(res.body) as Map<String, dynamic>;
+        currentUser = data['user'] as Map<String, dynamic>;
+        notifyListeners();
+        return true;
+      }
+      return false;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Future<void> logout() async {
+    _token = null;
+    currentUser = null;
+    await _storage.delete(key: _tokenKey);
+    notifyListeners();
+  }
+
+  String _friendlyError(Object e) {
+    final msg = e.toString();
+    if (msg.contains('TimeoutException')) {
+      return 'เชื่อมต่อ Server ไม่ได้ (Timeout) — เช็คว่า backend รันอยู่หรือไม่';
+    }
+    if (msg.contains('SocketException') || msg.contains('Connection refused')) {
+      return 'เชื่อมต่อ Server ไม่ได้ — เช็คว่า backend รันอยู่ และตั้งค่า IP ถูกต้อง';
+    }
+    return 'เกิดข้อผิดพลาด: $msg';
+  }
+}

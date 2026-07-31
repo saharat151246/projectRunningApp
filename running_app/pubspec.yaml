@@ -1,0 +1,40 @@
+name: running_app
+description: "Running App - Cross-platform running tracker with AI Coach & Gamification"
+publish_to: 'none'
+version: 0.1.0
+
+environment:
+  sdk: '>=3.3.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.6
+  google_fonts: ^6.2.1
+  fl_chart: ^0.68.0
+  intl: ^0.19.0
+
+  # --- GPS Tracking (เพิ่มแล้ว) ---
+  geolocator: ^13.0.1          # ดึงตำแหน่ง GPS จริงแบบ real-time
+  permission_handler: ^11.3.1  # ขอ permission ตำแหน่ง
+  flutter_map: ^7.0.2          # แผนที่ (ใช้ OpenStreetMap ไม่ต้องใช้ API Key)
+  latlong2: ^0.9.1             # ชนิดข้อมูลพิกัด lat/lng สำหรับ flutter_map
+  shared_preferences: ^2.3.2   # เก็บสถิติ/เหรียญ/ภารกิจไว้ในเครื่อง (ก่อนมี backend จริง)
+  http: ^1.2.2                 # เรียก API ไปยัง Node.js backend
+  flutter_secure_storage: ^9.2.2  # เก็บ JWT token อย่างปลอดภัย
+
+  # --- จะเพิ่มตอนทำระบบถัดไป ---
+  # firebase_auth: ^5.3.1        # Login / Google Sign-In
+  # google_sign_in: ^6.2.1
+  # hive: ^2.2.3                 # เก็บข้อมูล offline
+
+  share_plus: ^12.0.2
+  cross_file: ^0.3.4+2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+
+flutter:
+  uses-material-design: true
