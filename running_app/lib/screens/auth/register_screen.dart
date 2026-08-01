@@ -56,6 +56,26 @@ class _RegisterScreenState extends State<RegisterScreen> {
     }
   }
 
+  Future<void> _handleGoogleLogin() async {
+    setState(() {
+      _loading = true;
+      _errorText = null;
+    });
+
+    final result = await AuthService.instance.loginWithGoogle();
+
+    if (!mounted) return;
+    setState(() => _loading = false);
+
+    if (result.success) {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => const MainNavigation()),
+      );
+    } else if (result.errorMessage != null) {
+      setState(() => _errorText = result.errorMessage);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -160,11 +180,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               SocialLoginButton(
                 label: 'สมัครด้วย Google',
                 assetIconEmoji: '🔵',
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Google Sign-In จะเชื่อมต่อในลำดับถัดไป')),
-                  );
-                },
+                onPressed: _loading ? null : _handleGoogleLogin,
               ),
               const SizedBox(height: 28),
               Center(

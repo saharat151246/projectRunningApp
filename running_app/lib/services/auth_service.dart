@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'api_config.dart';
 
 /// ผลลัพธ์จากการเรียก Auth API - ใช้บอกหน้าจอว่าสำเร็จหรือไม่ และข้อความ error คืออะไร
@@ -98,6 +99,53 @@ class AuthService extends ChangeNotifier {
     }
   }
 
+  final _googleSignIn = GoogleSignIn(
+    scopes: ['email'],
+    serverClientId: ApiConfig.googleWebClientId,
+  );
+
+  /// เข้าสู่ระบบด้วย Google: เปิดหน้าเลือกบัญชี Google ของเครื่อง
+  /// ดึง idToken แล้วส่งไปให้ backend verify (POST /api/auth/google)
+  Future<AuthResult> loginWithGoogle() async {
+    try {
+      final account = await _googleSignIn.signIn();
+      if (account == null) {
+        // ผู้ใช้กดยกเลิกหน้าเลือกบัญชี ไม่ถือเป็น error
+        return AuthResult(success: false, errorMessage: null);
+      }
+
+      final googleAuth = await account.authentication;
+      final idToken = googleAuth.idToken;
+      if (idToken == null) {
+        return AuthResult(
+          success: false,
+          errorMessage: 'ไม่สามารถดึง Google ID token ได้ กรุณาลองใหม่',
+        );
+      }
+
+      final res = await http
+          .post(
+            Uri.parse('${ApiConfig.baseUrl}/auth/google'),
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode({'id_token': idToken}),
+          )
+          .timeout(const Duration(seconds: 12));
+
+      final data = jsonDecode(res.body) as Map<String, dynamic>;
+
+      if (res.statusCode == 200) {
+        _token = data['token'] as String;
+        currentUser = data['user'] as Map<String, dynamic>;
+        await _storage.write(key: _tokenKey, value: _token);
+        notifyListeners();
+        return AuthResult(success: true);
+      }
+      return AuthResult(success: false, errorMessage: data['message']?.toString());
+    } catch (e) {
+      return AuthResult(success: false, errorMessage: _friendlyError(e));
+    }
+  }
+
   Future<bool> fetchMe() async {
     if (_token == null) return false;
     try {
@@ -122,6 +170,11 @@ class AuthService extends ChangeNotifier {
     _token = null;
     currentUser = null;
     await _storage.delete(key: _tokenKey);
+    try {
+      await _googleSignIn.signOut();
+    } catch (_) {
+      // ไม่เคย sign-in ด้วย Google หรือเน็ตหลุด ไม่ต้องสน
+    }
     notifyListeners();
   }
 

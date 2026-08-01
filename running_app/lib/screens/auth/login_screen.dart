@@ -47,11 +47,25 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  // TODO: ต่อ google_sign_in + Firebase Auth ในลำดับถัดไป
-  void _handleGoogleLogin() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Google Sign-In จะเชื่อมต่อในลำดับถัดไป')),
-    );
+  Future<void> _handleGoogleLogin() async {
+    setState(() {
+      _loading = true;
+      _errorText = null;
+    });
+
+    final result = await AuthService.instance.loginWithGoogle();
+
+    if (!mounted) return;
+    setState(() => _loading = false);
+
+    if (result.success) {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => const MainNavigation()),
+      );
+    } else if (result.errorMessage != null) {
+      // errorMessage เป็น null แปลว่าผู้ใช้กดยกเลิกเอง ไม่ต้องโชว์ error
+      setState(() => _errorText = result.errorMessage);
+    }
   }
 
   @override
@@ -162,7 +176,7 @@ class _LoginScreenState extends State<LoginScreen> {
               SocialLoginButton(
                 label: 'เข้าสู่ระบบด้วย Google',
                 assetIconEmoji: '🔵',
-                onPressed: _handleGoogleLogin,
+                onPressed: _loading ? null : _handleGoogleLogin,
               ),
               const SizedBox(height: 28),
               Center(

@@ -22,4 +22,11 @@ class ApiConfig {
     // iOS Simulator และแพลตฟอร์มอื่นๆ
     return 'http://localhost:$port/api';
   }
+
+  /// Web application Client ID จาก Google Cloud Console
+  /// (คนละตัวกับ Android Client ID — ต้องเป็นตัว "Web application" เท่านั้น)
+  /// ใช้เป็น serverClientId ตอน initialize GoogleSignIn เพื่อให้ idToken ที่ได้
+  /// มี audience ตรงกับที่ backend ใช้ verify (ต้องเป็นค่าเดียวกับ GOOGLE_CLIENT_ID ใน backend .env)
+  static const googleWebClientId =
+      '385307095607-63kma56bh9es5ib9aqgcn690t940u30q.apps.googleusercontent.com';
 }

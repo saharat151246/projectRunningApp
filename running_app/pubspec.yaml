@@ -22,10 +22,10 @@ dependencies:
   shared_preferences: ^2.3.2   # เก็บสถิติ/เหรียญ/ภารกิจไว้ในเครื่อง (ก่อนมี backend จริง)
   http: ^1.2.2                 # เรียก API ไปยัง Node.js backend
   flutter_secure_storage: ^9.2.2  # เก็บ JWT token อย่างปลอดภัย
+  google_sign_in: ^6.2.1       # Google Sign-In
 
   # --- จะเพิ่มตอนทำระบบถัดไป ---
-  # firebase_auth: ^5.3.1        # Login / Google Sign-In
-  # google_sign_in: ^6.2.1
+  # firebase_auth: ^5.3.1        # ถ้าจะย้ายไปใช้ Firebase Auth แทนในอนาคต
   # hive: ^2.2.3                 # เก็บข้อมูล offline
 
   share_plus: ^12.0.2

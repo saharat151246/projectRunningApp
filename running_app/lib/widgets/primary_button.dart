@@ -77,7 +77,7 @@ class PrimaryButton extends StatelessWidget {
 class SocialLoginButton extends StatelessWidget {
   final String label;
   final String assetIconEmoji; // ใช้ emoji แทนโลโก้จริงชั่วคราว
-  final VoidCallback onPressed;
+  final VoidCallback? onPressed;
 
   const SocialLoginButton({
     super.key,
