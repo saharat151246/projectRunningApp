@@ -54,7 +54,6 @@ running_app_backend/
 ## ขั้นตอนถัดไป (ยังไม่ทำในไฟล์ชุดนี้)
 
 1. เชื่อมฝั่ง Flutter app ให้ยิง AI Coach API มาที่นี่ (กำลังทำต่อ)
-2. เพิ่ม Google Sign-In endpoint (`/api/auth/google`)
 
 ## API ที่ใช้งานได้จริงแล้ว: AI Coach
 
@@ -170,6 +169,44 @@ GEMINI_API_KEY=your_key_here
 // Response 200
 { "user": { "id": "...", "name": "สมชาย ใจดี", ... } }
 ```
+
+### POST /api/auth/google — เข้าสู่ระบบด้วย Google
+
+**ก่อนใช้งาน ต้องตั้งค่า Google Client ID ก่อน:**
+1. ไปที่ [Google Cloud Console](https://console.cloud.google.com/apis/credentials)
+2. สร้าง OAuth Client ID ชนิด **Web application** (ใช้ตัวนี้ฝั่ง server แม้ app จะเป็น Android/iOS ก็ตาม เพราะต้อง verify token ด้วย audience ของ web client)
+3. ก็อป Client ID มาใส่ใน `.env`:
+```
+GOOGLE_CLIENT_ID=xxxxxxxx.apps.googleusercontent.com
+```
+4. รีสตาร์ท server
+
+**ฝั่ง Flutter:** ใช้ package [`google_sign_in`](https://pub.dev/packages/google_sign_in) ล็อกอินแล้วดึง `idToken` จาก account ที่ได้ ส่งมาที่ endpoint นี้
+
+```json
+// Request body
+{ "id_token": "eyJhbGciOiJSUzI1NiIs..." }
+
+// Response 200
+{
+  "token": "eyJhbGciOiJIUzI1NiIs...",
+  "user": {
+    "id": "...",
+    "name": "สมชาย ใจดี",
+    "email": "somchai@gmail.com",
+    "auth_provider": "google",
+    "avatar_url": "https://lh3.googleusercontent.com/...",
+    "email_verified": true
+  }
+}
+```
+
+**พฤติกรรม:**
+- Server verify `id_token` กับ Google โดยตรง (เช็ค signature + audience) ก่อนเชื่อข้อมูลใดๆ
+- ถ้า email เคยสมัครด้วย email/password มาก่อน ระบบจะผูก `google_id` เข้ากับบัญชีเดิมให้อัตโนมัติ (ไม่สร้างบัญชีซ้ำ)
+- ถ้ายังไม่เคยสมัคร จะสร้างบัญชีใหม่ให้ทันที ไม่มี `password_hash` (login ผ่าน Google ทางเดียว)
+- ถ้า `id_token` ปลอมหรือหมดอายุ ตอบ `401`
+- ถ้ายังไม่ได้ตั้งค่า `GOOGLE_CLIENT_ID` ตอบ `500` พร้อม log แจ้งเตือนที่ฝั่ง server
 
 **ทดสอบง่ายๆ ด้วย Postman หรือ curl:**
 ```bash
