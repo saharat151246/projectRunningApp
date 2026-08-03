@@ -126,7 +126,7 @@ class _CoachChatScreenState extends State<CoachChatScreen> {
             bottomRight: Radius.circular(msg.isUser ? 4 : 18),
           ),
           boxShadow: [
-            BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 6, offset: const Offset(0, 2)),
+            BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 6, offset: const Offset(0, 2)),
           ],
         ),
         child: Text(
@@ -172,7 +172,7 @@ class _CoachChatScreenState extends State<CoachChatScreen> {
       decoration: BoxDecoration(
         color: AppColors.surface,
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8, offset: const Offset(0, -2)),
+          BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 8, offset: const Offset(0, -2)),
         ],
       ),
       child: SafeArea(

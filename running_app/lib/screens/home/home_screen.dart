@@ -6,6 +6,8 @@ import '../../services/stats_service.dart';
 import '../../services/run_service.dart';
 import '../../services/auth_service.dart';
 import '../../services/coach_service.dart';
+import '../../widgets/overtraining_warning_card.dart';
+import '../coach/coach_chat_screen.dart';
 import '../history/run_detail_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -104,14 +106,24 @@ class _HomeScreenState extends State<HomeScreen> {
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.12),
+                  color: AppColors.primary.withValues(alpha: 0.12),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(Icons.person_rounded, color: AppColors.primary),
               ),
             ],
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 20),
+
+          if (_coach != null)
+            OvertrainingWarningCard(
+              advice: _coach!,
+              onConsultCoach: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const CoachChatScreen()),
+                );
+              },
+            ),
 
           if (_loading)
             const Padding(
@@ -190,7 +202,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 borderRadius: BorderRadius.circular(18),
                 boxShadow: [
                   BoxShadow(
-                      color: Colors.black.withOpacity(0.04),
+                      color: Colors.black.withValues(alpha: 0.04),
                       blurRadius: 12,
                       offset: const Offset(0, 4)),
                 ],
@@ -268,7 +280,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.12),
+                      color: Colors.white.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: const Icon(Icons.psychology_alt_rounded,
@@ -292,7 +304,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 padding:
                                     const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                 decoration: BoxDecoration(
-                                  color: AppColors.accent.withOpacity(0.2),
+                                  color: AppColors.accent.withValues(alpha: 0.2),
                                   borderRadius: BorderRadius.circular(6),
                                 ),
                                 child: const Text('AI',
@@ -313,13 +325,13 @@ class _HomeScreenState extends State<HomeScreen> {
                                 height: 12,
                                 child: CircularProgressIndicator(
                                   strokeWidth: 2,
-                                  color: Colors.white.withOpacity(0.6),
+                                  color: Colors.white.withValues(alpha: 0.6),
                                 ),
                               ),
                               const SizedBox(width: 8),
                               Text('กำลังวิเคราะห์ข้อมูลการวิ่งของคุณ...',
                                   style: TextStyle(
-                                      color: Colors.white.withOpacity(0.6), fontSize: 12.5)),
+                                      color: Colors.white.withValues(alpha: 0.6), fontSize: 12.5)),
                             ],
                           )
                         else
@@ -328,7 +340,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 ? _coach!.advice
                                 : 'ยังไม่มีคำแนะนำในตอนนี้ ลองวิ่งดูสักครั้งแล้วกลับมาดูอีกครั้ง',
                             style: TextStyle(
-                              color: Colors.white.withOpacity(0.85),
+                              color: Colors.white.withValues(alpha: 0.85),
                               fontSize: 13,
                               height: 1.5,
                             ),
@@ -343,7 +355,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             style: OutlinedButton.styleFrom(
                               minimumSize: Size.zero,
                               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                              side: BorderSide(color: Colors.white.withOpacity(0.3)),
+                              side: BorderSide(color: Colors.white.withValues(alpha: 0.3)),
                               foregroundColor: Colors.white,
                             ),
                             icon: const Icon(Icons.chat_bubble_outline_rounded, size: 16),
@@ -358,9 +370,9 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
 
             const SizedBox(height: 28),
-            Row(
+            const Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: const [
+              children: [
                 Text('การวิ่งล่าสุด',
                     style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
               ],
@@ -395,7 +407,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       borderRadius: BorderRadius.circular(16),
                       boxShadow: [
                         BoxShadow(
-                            color: Colors.black.withOpacity(0.03),
+                            color: Colors.black.withValues(alpha: 0.03),
                             blurRadius: 8,
                             offset: const Offset(0, 3)),
                       ],
@@ -406,7 +418,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           width: 42,
                           height: 42,
                           decoration: BoxDecoration(
-                            color: AppColors.accent.withOpacity(0.12),
+                            color: AppColors.accent.withValues(alpha: 0.12),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: const Icon(Icons.directions_run_rounded,

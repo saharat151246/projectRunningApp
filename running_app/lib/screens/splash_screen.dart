@@ -76,7 +76,7 @@ class _SplashScreenState extends State<SplashScreen> {
               Text(
                 'วิ่งทุกก้าว มีเป้าหมายเสมอ',
                 style: TextStyle(
-                  color: Colors.white.withOpacity(0.7),
+                  color: Colors.white.withValues(alpha: 0.7),
                   fontSize: 14,
                 ),
               ),

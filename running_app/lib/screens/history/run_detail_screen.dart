@@ -1,13 +1,13 @@
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
-import 'package:cross_file/cross_file.dart';
+
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../theme/app_theme.dart';
 import '../../services/run_service.dart';
-import '../../models/run_model.dart';
+
 
 /// หน้ารายละเอียดการวิ่งครั้งเดียว - แสดงเส้นทาง GPS จริงบนแผนที่ + สถิติครบ
 class RunDetailScreen extends StatefulWidget {
@@ -148,7 +148,7 @@ ${routeUrl.isEmpty ? '' : '\nดูเส้นทาง: $routeUrl\n'}
     canvas.save();
     canvas.clipRRect(mapRect);
     final gridPaint = Paint()
-      ..color = Colors.white.withOpacity(.07)
+      ..color = Colors.white.withValues(alpha: .07)
       ..strokeWidth = 2;
     for (var x = mapLeft; x <= mapLeft + mapWidth; x += 104) {
       canvas.drawLine(Offset(x, mapTop), Offset(x, mapTop + mapHeight), gridPaint);
@@ -178,7 +178,7 @@ ${routeUrl.isEmpty ? '' : '\nดูเส้นทาง: $routeUrl\n'}
         routePath.lineTo(offset.dx, offset.dy);
       }
       canvas.drawPath(routePath, Paint()
-        ..color = Colors.white.withOpacity(.3)
+        ..color = Colors.white.withValues(alpha: .3)
         ..style = PaintingStyle.stroke
         ..strokeWidth = 23
         ..strokeCap = StrokeCap.round
@@ -217,7 +217,7 @@ ${routeUrl.isEmpty ? '' : '\nดูเส้นทาง: $routeUrl\n'}
           maxWidth: 700);
       if (i < stats.length - 1) {
         canvas.drawLine(Offset(72, top + 58), Offset(1008, top + 58),
-            Paint()..color = Colors.white.withOpacity(.12));
+            Paint()..color = Colors.white.withValues(alpha: .12));
       }
     }
     text('#RunMate  #Running', const Offset(72, 1280), 19, AppColors.accent,
@@ -230,6 +230,9 @@ ${routeUrl.isEmpty ? '' : '\nดูเส้นทาง: $routeUrl\n'}
   }
 
   Future<void> _shareRun(BuildContext context, RunDetail run) async {
+    final box = context.findRenderObject() as RenderBox?;
+    final messenger = ScaffoldMessenger.of(context);
+
     final shouldShare = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
@@ -256,7 +259,6 @@ ${routeUrl.isEmpty ? '' : '\nดูเส้นทาง: $routeUrl\n'}
     try {
       final imageBytes = await _buildShareCard(run);
       if (!mounted) return;
-      final box = context.findRenderObject() as RenderBox?;
       await SharePlus.instance.share(
         ShareParams(
           text: _shareText(run),
@@ -269,7 +271,7 @@ ${routeUrl.isEmpty ? '' : '\nดูเส้นทาง: $routeUrl\n'}
       );
     } catch (_) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
+      messenger.showSnackBar(
         const SnackBar(content: Text('ไม่สามารถสร้างการ์ดสำหรับแชร์ได้')),
       );
     }
@@ -379,10 +381,10 @@ ${routeUrl.isEmpty ? '' : '\nดูเส้นทาง: $routeUrl\n'}
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.map_outlined, color: Colors.white.withOpacity(0.2), size: 40),
+                        Icon(Icons.map_outlined, color: Colors.white.withValues(alpha: 0.2), size: 40),
                         const SizedBox(height: 8),
                         Text('ไม่มีข้อมูลเส้นทาง GPS สำหรับการวิ่งนี้',
-                            style: TextStyle(color: Colors.white.withOpacity(0.4), fontSize: 12)),
+                            style: TextStyle(color: Colors.white.withValues(alpha: 0.4), fontSize: 12)),
                       ],
                     ),
                   ),
@@ -457,7 +459,7 @@ ${routeUrl.isEmpty ? '' : '\nดูเส้นทาง: $routeUrl\n'}
                     borderRadius: BorderRadius.circular(16),
                     boxShadow: [
                       BoxShadow(
-                          color: Colors.black.withOpacity(0.03),
+                          color: Colors.black.withValues(alpha: 0.03),
                           blurRadius: 8,
                           offset: const Offset(0, 3)),
                     ],
@@ -534,7 +536,7 @@ class _StatBlock extends StatelessWidget {
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 8, offset: const Offset(0, 3)),
+          BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 8, offset: const Offset(0, 3)),
         ],
       ),
       child: Column(

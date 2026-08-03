@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../models/gamification_model.dart';
 import '../../services/gamification_service.dart';
 import '../../theme/app_theme.dart';
 
@@ -153,7 +152,7 @@ class _GamificationScreenState extends State<GamificationScreen> {
 
   Widget _missionCard(MissionItem m, {bool personal = false}) => Container(
     margin: const EdgeInsets.only(bottom: 10), padding: const EdgeInsets.all(15),
-    decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(16), boxShadow: [BoxShadow(color: Colors.black.withOpacity(.03), blurRadius: 8)]),
+    decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(16), boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: .03), blurRadius: 8)]),
     child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       Row(children: [
         Expanded(child: Text(m.title, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14))),
@@ -168,9 +167,9 @@ class _GamificationScreenState extends State<GamificationScreen> {
     ]),
   );
 
-  Widget _reward(MissionItem m) => Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4), decoration: BoxDecoration(color: (m.completed ? AppColors.gold : AppColors.accent).withOpacity(.13), borderRadius: BorderRadius.circular(8)), child: Text(m.completed ? 'สำเร็จ ✓' : '+${m.reward}', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: m.completed ? AppColors.gold : AppColors.accent)));
+  Widget _reward(MissionItem m) => Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4), decoration: BoxDecoration(color: (m.completed ? AppColors.gold : AppColors.accent).withValues(alpha: .13), borderRadius: BorderRadius.circular(8)), child: Text(m.completed ? 'สำเร็จ ✓' : '+${m.reward}', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: m.completed ? AppColors.gold : AppColors.accent)));
 
-  Widget _badge(BadgeItem b) => Container(decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(16), border: Border.all(color: b.unlocked ? AppColors.gold.withOpacity(.45) : AppColors.divider)), child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [Opacity(opacity: b.unlocked ? 1 : .28, child: Text(b.emoji, style: const TextStyle(fontSize: 30))), const SizedBox(height: 6), Text(b.title, textAlign: TextAlign.center, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: b.unlocked ? AppColors.textPrimary : AppColors.textSecondary))]));
+  Widget _badge(BadgeItem b) => Container(decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(16), border: Border.all(color: b.unlocked ? AppColors.gold.withValues(alpha: .45) : AppColors.divider)), child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [Opacity(opacity: b.unlocked ? 1 : .28, child: Text(b.emoji, style: const TextStyle(fontSize: 30))), const SizedBox(height: 6), Text(b.title, textAlign: TextAlign.center, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: b.unlocked ? AppColors.textPrimary : AppColors.textSecondary))]));
 }
 
 class _MissionDraft {
@@ -197,9 +196,9 @@ class _MissionDialogState extends State<_MissionDialog> {
     content: Form(key: _formKey, child: SingleChildScrollView(child: Column(mainAxisSize: MainAxisSize.min, children: [
       TextFormField(controller: _title, decoration: const InputDecoration(labelText: 'ชื่อภารกิจ', hintText: 'เช่น วิ่งรับอรุณ'), validator: (v) => (v?.trim().isEmpty ?? true) ? 'กรุณาระบุชื่อภารกิจ' : null),
       const SizedBox(height: 12),
-      DropdownButtonFormField(value: _frequency, decoration: const InputDecoration(labelText: 'รอบภารกิจ'), items: const [DropdownMenuItem(value: 'daily', child: Text('รายวัน')), DropdownMenuItem(value: 'weekly', child: Text('รายสัปดาห์')), DropdownMenuItem(value: 'monthly', child: Text('รายเดือน'))], onChanged: (v) => setState(() => _frequency = v!)),
+      DropdownButtonFormField(initialValue: _frequency, decoration: const InputDecoration(labelText: 'รอบภารกิจ'), items: const [DropdownMenuItem(value: 'daily', child: Text('รายวัน')), DropdownMenuItem(value: 'weekly', child: Text('รายสัปดาห์')), DropdownMenuItem(value: 'monthly', child: Text('รายเดือน'))], onChanged: (v) => setState(() => _frequency = v!)),
       const SizedBox(height: 12),
-      DropdownButtonFormField(value: _metric, decoration: const InputDecoration(labelText: 'เป้าหมาย'), items: const [DropdownMenuItem(value: 'distance', child: Text('ระยะทาง (กม.)')), DropdownMenuItem(value: 'runs', child: Text('จำนวนครั้งวิ่ง'))], onChanged: (v) => setState(() => _metric = v!)),
+      DropdownButtonFormField(initialValue: _metric, decoration: const InputDecoration(labelText: 'เป้าหมาย'), items: const [DropdownMenuItem(value: 'distance', child: Text('ระยะทาง (กม.)')), DropdownMenuItem(value: 'runs', child: Text('จำนวนครั้งวิ่ง'))], onChanged: (v) => setState(() => _metric = v!)),
       const SizedBox(height: 12),
       TextFormField(controller: _target, keyboardType: const TextInputType.numberWithOptions(decimal: true), decoration: InputDecoration(labelText: _metric == 'distance' ? 'เป้าหมาย (กม.)' : 'เป้าหมาย (ครั้ง)'), validator: (v) => (double.tryParse(v ?? '') ?? 0) > 0 ? null : 'ระบุจำนวนที่มากกว่า 0'),
     ]))),

@@ -109,7 +109,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   width: double.infinity,
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: Colors.red.withOpacity(0.08),
+                    color: Colors.red.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
@@ -167,7 +167,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   const Expanded(child: Divider(color: AppColors.divider)),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 12),
-                    child: Text('หรือ', style: TextStyle(color: AppColors.textSecondary.withOpacity(0.8), fontSize: 12.5)),
+                    child: Text('หรือ', style: TextStyle(color: AppColors.textSecondary.withValues(alpha: 0.8), fontSize: 12.5)),
                   ),
                   const Expanded(child: Divider(color: AppColors.divider)),
                 ],

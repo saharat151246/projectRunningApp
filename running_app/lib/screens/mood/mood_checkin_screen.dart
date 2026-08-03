@@ -95,7 +95,7 @@ class _MoodCheckinScreenState extends State<MoodCheckinScreen> {
                       width: 96,
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       decoration: BoxDecoration(
-                        color: isSelected ? AppColors.primary.withOpacity(0.1) : AppColors.surface,
+                        color: isSelected ? AppColors.primary.withValues(alpha: 0.1) : AppColors.surface,
                         borderRadius: BorderRadius.circular(18),
                         border: Border.all(
                           color: isSelected ? AppColors.primary : AppColors.divider,

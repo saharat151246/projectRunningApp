@@ -31,7 +31,7 @@ class ProfileScreen extends StatelessWidget {
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: [
                   BoxShadow(
-                      color: Colors.black.withOpacity(0.04),
+                      color: Colors.black.withValues(alpha: 0.04),
                       blurRadius: 12,
                       offset: const Offset(0, 4)),
                 ],
@@ -41,8 +41,8 @@ class ProfileScreen extends StatelessWidget {
                   Container(
                     width: 64,
                     height: 64,
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(colors: AppColors.primaryGradient),
+                    decoration: const BoxDecoration(
+                      gradient: LinearGradient(colors: AppColors.primaryGradient),
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(Icons.person_rounded, color: Colors.white, size: 32),
@@ -71,8 +71,8 @@ class ProfileScreen extends StatelessWidget {
             ),
 
             const SizedBox(height: 20),
-            Row(
-              children: const [
+            const Row(
+              children: [
                 Expanded(child: _MiniStat(label: 'น้ำหนัก', value: '-- กก.')),
                 SizedBox(width: 12),
                 Expanded(child: _MiniStat(label: 'ส่วนสูง', value: '-- ซม.')),
@@ -163,7 +163,7 @@ class _MenuTile extends StatelessWidget {
         onTap: onTap ?? () {},
         leading: Icon(icon, color: color, size: 22),
         title: Text(label, style: TextStyle(color: color, fontWeight: FontWeight.w600, fontSize: 13.5)),
-        trailing: Icon(Icons.chevron_right_rounded, color: color.withOpacity(0.5)),
+        trailing: Icon(Icons.chevron_right_rounded, color: color.withValues(alpha: 0.5)),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
       ),
     );

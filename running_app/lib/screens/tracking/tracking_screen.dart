@@ -7,7 +7,9 @@ import '../../theme/app_theme.dart';
 import '../../widgets/primary_button.dart';
 import '../../services/stats_service.dart';
 import '../../services/run_service.dart';
+import '../../services/coach_service.dart';
 import '../mood/mood_checkin_screen.dart';
+import '../coach/coach_chat_screen.dart';
 
 /// หน้าจอติดตามการวิ่งด้วย GPS จริง
 /// - ขอ permission ตำแหน่งจากอุปกรณ์
@@ -25,6 +27,7 @@ class _TrackingScreenState extends State<TrackingScreen> {
   Timer? _secondTimer;
   StreamSubscription<Position>? _positionStream;
   final MapController _mapController = MapController();
+  CoachAdvice? _coachAdvice;
 
   int _seconds = 0;
   bool _isRunning = false;
@@ -32,7 +35,6 @@ class _TrackingScreenState extends State<TrackingScreen> {
   DateTime? _runStartTime; // เวลาเริ่มวิ่งจริง (ตั้งครั้งเดียวตอนกดเริ่ม ไม่ถูกรีเซ็ตตอน resume)
 
   double _totalDistanceMeters = 0;
-  double _currentSpeedMps = 0; // เมตร/วินาที จาก GPS
   Position? _lastPosition;
   final List<LatLng> _routePoints = [];
   final List<DateTime> _routeTimestamps = []; // เวลาที่บันทึกแต่ละจุด คู่กับ _routePoints
@@ -45,6 +47,13 @@ class _TrackingScreenState extends State<TrackingScreen> {
   void initState() {
     super.initState();
     _initLocation();
+    _checkCoachWarning();
+  }
+
+  Future<void> _checkCoachWarning() async {
+    final advice = await CoachService.instance.fetchAdvice();
+    if (!mounted) return;
+    setState(() => _coachAdvice = advice);
   }
 
   Future<void> _initLocation() async {
@@ -84,7 +93,9 @@ class _TrackingScreenState extends State<TrackingScreen> {
 
     try {
       final pos = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+        ),
       ).timeout(
         const Duration(seconds: 15),
         onTimeout: () {
@@ -105,6 +116,82 @@ class _TrackingScreenState extends State<TrackingScreen> {
             : 'ไม่สามารถดึงตำแหน่งได้: $e';
       });
     }
+  }
+
+  void _onStartPressed() {
+    if (_coachAdvice != null &&
+        (_coachAdvice!.overtrainingRisk || _coachAdvice!.fatigueSignal)) {
+      _showOvertrainingDialog();
+    } else {
+      _start();
+    }
+  }
+
+  void _showOvertrainingDialog() {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Row(
+          children: [
+            Icon(Icons.warning_amber_rounded, color: Color(0xFFE82A2A)),
+            SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                'แจ้งเตือนเสี่ยงบาดเจ็บ',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFFC01C1C)),
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              _coachAdvice?.overtrainingRisk == true
+                  ? 'สัปดาห์นี้ระยะทางวิ่งของคุณเพิ่มขึ้นเกินเกณฑ์ปลอดภัย 10%/สัปดาห์ การออกกำลังกายหนักต่อเนื่องอาจเพิ่มความเสี่ยงบาดเจ็บ'
+                  : 'ตรวจพบสัญญาณเหนื่อยล้าสะสมจากการเช็คอินย้อนหลังหลายครั้ง ร่างกายต้องการการพักฟื้นเพิ่มเติม',
+              style: const TextStyle(fontSize: 13.5, height: 1.4),
+            ),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFF1F0),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Text(
+                '💡 คำแนะนำ: แนะนำให้วิ่งเพซสบายๆ หรือลดระยะทางในการวิ่งครั้งนี้ลง 20-30%',
+                style: TextStyle(fontSize: 12, color: Color(0xFF991B1B), fontWeight: FontWeight.w600),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const CoachChatScreen()),
+              );
+            },
+            child: const Text('ปรึกษา AI Coach'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFE82A2A),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            onPressed: () {
+              Navigator.pop(ctx);
+              _start();
+            },
+            child: const Text('รับทราบและเริ่มวิ่ง'),
+          ),
+        ],
+      ),
+    );
   }
 
   void _start() {
@@ -144,7 +231,6 @@ class _TrackingScreenState extends State<TrackingScreen> {
 
     setState(() {
       _lastPosition = position;
-      _currentSpeedMps = position.speed > 0 ? position.speed : 0;
       _routePoints.add(newPoint);
       _routeTimestamps.add(DateTime.now());
     });
@@ -394,7 +480,7 @@ class _TrackingScreenState extends State<TrackingScreen> {
                       icon: Container(
                         padding: const EdgeInsets.all(6),
                         decoration: BoxDecoration(
-                          color: Colors.black.withOpacity(0.3),
+                          color: Colors.black.withValues(alpha: 0.3),
                           shape: BoxShape.circle,
                         ),
                         child: const Icon(Icons.close_rounded, color: Colors.white, size: 20),
@@ -408,12 +494,12 @@ class _TrackingScreenState extends State<TrackingScreen> {
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                         decoration: BoxDecoration(
-                          color: AppColors.accent.withOpacity(0.2),
+                          color: AppColors.accent.withValues(alpha: 0.2),
                           borderRadius: BorderRadius.circular(20),
                         ),
-                        child: Row(
+                        child: const Row(
                           mainAxisSize: MainAxisSize.min,
-                          children: const [
+                          children: [
                             Icon(Icons.circle, size: 8, color: AppColors.accent),
                             SizedBox(width: 6),
                             Text('กำลังบันทึก GPS จริง',
@@ -446,7 +532,7 @@ class _TrackingScreenState extends State<TrackingScreen> {
                     ),
                     const SizedBox(height: 4),
                     Text('เวลา',
-                        style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 12)),
+                        style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 12)),
                     const SizedBox(height: 28),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -465,7 +551,7 @@ class _TrackingScreenState extends State<TrackingScreen> {
                         child: PrimaryButton(
                           label: 'เริ่มวิ่ง',
                           icon: Icons.play_arrow_rounded,
-                          onPressed: _start,
+                          onPressed: _onStartPressed,
                         ),
                       )
                     else
@@ -475,7 +561,7 @@ class _TrackingScreenState extends State<TrackingScreen> {
                             child: OutlinedButton(
                               onPressed: _pauseResume,
                               style: OutlinedButton.styleFrom(
-                                side: BorderSide(color: Colors.white.withOpacity(0.3)),
+                                side: BorderSide(color: Colors.white.withValues(alpha: 0.3)),
                               ),
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
@@ -528,13 +614,13 @@ class _TrackingScreenState extends State<TrackingScreen> {
               ),
               TextSpan(
                 text: ' $unit',
-                style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 12),
+                style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 12),
               ),
             ],
           ),
         ),
         const SizedBox(height: 4),
-        Text(label, style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 11)),
+        Text(label, style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 11)),
       ],
     );
   }

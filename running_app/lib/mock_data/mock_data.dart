@@ -1,5 +1,6 @@
 /// ข้อมูลจำลอง (Mock Data) สำหรับแสดงผล UI เท่านั้น
 /// จะถูกแทนที่ด้วยข้อมูลจริงจาก MongoDB ผ่าน Node.js API ในลำดับถัดไป
+library;
 
 class MockRun {
   final String date;
