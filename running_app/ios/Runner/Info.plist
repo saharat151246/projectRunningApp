@@ -66,5 +66,23 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<!-- GPS Location Permissions -->
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>แอปต้องการสิทธิ์เข้าถึงพิกัดตำแหน่ง GPS เพื่อติดตามระยะทางและแสดงเส้นทางการวิ่งแบบ Real-time</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>แอปต้องการสิทธิ์เข้าถึงพิกัดตำแหน่ง GPS เพื่อติดตามระยะทางขณะที่คุณกำลังวิ่งแม้สลับไปหน้าอื่น</string>
+	<key>NSLocationAlwaysUsageDescription</key>
+	<string>แอปต้องการสิทธิ์เข้าถึงพิกัดตำแหน่ง GPS เพื่อติดตามระยะทางการวิ่งต่อเนื่องในเบื้องหลัง</string>
+
+	<!-- Allow HTTP Connection to Backend Server -->
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsArbitraryLoads</key>
+		<true/>
+	</dict>
+
+	<!-- Photo Library Sharing Permission -->
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>แอปต้องการเข้าถึงคลังรูปภาพเพื่อบันทึกและแชร์การ์ดสรุปผลการวิ่งของคุณ</string>
 </dict>
 </plist>

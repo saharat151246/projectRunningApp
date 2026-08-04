@@ -20,15 +20,20 @@ class StatCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 12,
+            color: color.withValues(alpha: 0.08),
+            blurRadius: 16,
             offset: const Offset(0, 4),
+          ),
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
           ),
         ],
       ),
@@ -36,14 +41,14 @@ class StatCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            padding: const EdgeInsets.all(8),
+            padding: const EdgeInsets.all(9),
             decoration: BoxDecoration(
               color: color.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(icon, color: color, size: 20),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
           Row(
             crossAxisAlignment: CrossAxisAlignment.baseline,
             textBaseline: TextBaseline.alphabetic,
@@ -61,6 +66,7 @@ class StatCard extends StatelessWidget {
                 unit,
                 style: const TextStyle(
                   fontSize: 12,
+                  fontWeight: FontWeight.w600,
                   color: AppColors.textSecondary,
                 ),
               ),
@@ -72,6 +78,7 @@ class StatCard extends StatelessWidget {
             style: const TextStyle(
               fontSize: 12.5,
               color: AppColors.textSecondary,
+              fontWeight: FontWeight.w600,
             ),
           ),
         ],

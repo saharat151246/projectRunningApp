@@ -18,9 +18,9 @@ class PrimaryButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 54,
+      height: 52,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
         gradient: const LinearGradient(
           colors: AppColors.primaryGradient,
           begin: Alignment.centerLeft,
@@ -28,16 +28,16 @@ class PrimaryButton extends StatelessWidget {
         ),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primary.withValues(alpha: 0.35),
+            color: AppColors.primary.withValues(alpha: 0.3),
             blurRadius: 16,
-            offset: const Offset(0, 8),
+            offset: const Offset(0, 6),
           ),
         ],
       ),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(20),
           onTap: loading ? null : onPressed,
           child: Center(
             child: loading
@@ -61,7 +61,7 @@ class PrimaryButton extends StatelessWidget {
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 16,
-                          fontWeight: FontWeight.w600,
+                          fontWeight: FontWeight.w800,
                         ),
                       ),
                     ],

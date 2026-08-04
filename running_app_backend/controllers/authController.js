@@ -170,3 +170,35 @@ exports.me = async (req, res) => {
     res.status(500).json({ message: 'เกิดข้อผิดพลาดฝั่งเซิร์ฟเวอร์' });
   }
 };
+
+// PUT /api/auth/me (ต้องแนบ JWT ผ่าน middleware ก่อน)
+exports.updateProfile = async (req, res) => {
+  try {
+    const { name, weight, height, age, gender } = req.body;
+    const user = await User.findById(req.userId);
+    if (!user) return res.status(404).json({ message: 'ไม่พบผู้ใช้' });
+
+    if (name !== undefined && name.toString().trim().length > 0) {
+      user.name = name.toString().trim();
+    }
+    if (weight !== undefined && weight !== null && !isNaN(weight)) {
+      user.weight = Number(weight);
+    }
+    if (height !== undefined && height !== null && !isNaN(height)) {
+      user.height = Number(height);
+    }
+    if (age !== undefined && age !== null && !isNaN(age)) {
+      user.age = Number(age);
+    }
+    if (gender !== undefined && gender !== null) {
+      user.gender = gender;
+    }
+
+    await user.save();
+    res.json({ user: toPublicUser(user) });
+  } catch (err) {
+    console.error('updateProfile error:', err);
+    res.status(500).json({ message: 'เกิดข้อผิดพลาดฝั่งเซิร์ฟเวอร์' });
+  }
+};
+

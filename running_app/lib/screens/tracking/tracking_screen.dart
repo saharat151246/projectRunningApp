@@ -240,7 +240,12 @@ class _TrackingScreenState extends State<TrackingScreen> {
 
   void _pauseResume() {
     if (_isPaused) {
-      _start();
+      // Resume existing stream + timer instead of creating new ones
+      _positionStream?.resume();
+      _secondTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+        setState(() => _seconds++);
+      });
+      setState(() => _isPaused = false);
     } else {
       _secondTimer?.cancel();
       _positionStream?.pause();
@@ -380,6 +385,7 @@ class _TrackingScreenState extends State<TrackingScreen> {
   void dispose() {
     _secondTimer?.cancel();
     _positionStream?.cancel();
+    _mapController.dispose();
     super.dispose();
   }
 

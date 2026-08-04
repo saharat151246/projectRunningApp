@@ -166,6 +166,45 @@ class AuthService extends ChangeNotifier {
     }
   }
 
+  Future<AuthResult> updateProfile({
+    String? name,
+    double? weight,
+    double? height,
+    int? age,
+  }) async {
+    if (_token == null) {
+      return AuthResult(success: false, errorMessage: 'กรุณาเข้าสู่ระบบก่อน');
+    }
+    try {
+      final res = await http
+          .put(
+            Uri.parse('${ApiConfig.baseUrl}/auth/me'),
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer $_token',
+            },
+            body: jsonEncode({
+              if (name != null) 'name': name,
+              if (weight != null) 'weight': weight,
+              if (height != null) 'height': height,
+              if (age != null) 'age': age,
+            }),
+          )
+          .timeout(const Duration(seconds: 12));
+
+      final data = jsonDecode(res.body) as Map<String, dynamic>;
+
+      if (res.statusCode == 200) {
+        currentUser = data['user'] as Map<String, dynamic>;
+        notifyListeners();
+        return AuthResult(success: true);
+      }
+      return AuthResult(success: false, errorMessage: data['message']?.toString());
+    } catch (e) {
+      return AuthResult(success: false, errorMessage: _friendlyError(e));
+    }
+  }
+
   Future<void> logout() async {
     _token = null;
     currentUser = null;

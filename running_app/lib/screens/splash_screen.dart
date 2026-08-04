@@ -11,76 +11,124 @@ class SplashScreen extends StatefulWidget {
   State<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> {
+class _SplashScreenState extends State<SplashScreen>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _animCtrl;
+  late Animation<double> _fadeAnim;
+  late Animation<double> _scaleAnim;
+
   @override
   void initState() {
     super.initState();
+    _animCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1000),
+    );
+    _fadeAnim = CurvedAnimation(parent: _animCtrl, curve: Curves.easeIn);
+    _scaleAnim = Tween<double>(begin: 0.85, end: 1.0).animate(
+      CurvedAnimation(parent: _animCtrl, curve: Curves.easeOutBack),
+    );
+    _animCtrl.forward();
     _init();
   }
 
   Future<void> _init() async {
-    // เช็คว่ามี session ที่ล็อกอินค้างไว้ในเครื่องหรือไม่ (ยิงไปเช็คกับ backend จริง)
     final loggedIn = await AuthService.instance.tryAutoLogin();
-    // การันตีให้เห็น Splash อย่างน้อยสักครู่ ไม่กระพริบเร็วเกินไป
-    await Future.delayed(const Duration(milliseconds: 900));
+    await Future.delayed(const Duration(milliseconds: 1200));
 
     if (!mounted) return;
     Navigator.of(context).pushReplacement(
-      MaterialPageRoute(
-        builder: (_) => loggedIn ? const MainNavigation() : const OnboardingScreen(),
+      PageRouteBuilder(
+        transitionDuration: const Duration(milliseconds: 400),
+        pageBuilder: (_, __, ___) =>
+            loggedIn ? const MainNavigation() : const OnboardingScreen(),
+        transitionsBuilder: (_, anim, __, child) =>
+            FadeTransition(opacity: anim, child: child),
       ),
     );
   }
 
   @override
+  void dispose() {
+    _animCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final screenSize = MediaQuery.of(context).size;
+    final iconSize = (screenSize.width * 0.22).clamp(80.0, 110.0);
+
     return Scaffold(
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             colors: AppColors.darkGradient,
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
           ),
         ),
         child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                width: 96,
-                height: 96,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(28),
-                  gradient: const LinearGradient(
-                    colors: AppColors.primaryGradient,
+          child: FadeTransition(
+            opacity: _fadeAnim,
+            child: ScaleTransition(
+              scale: _scaleAnim,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    width: iconSize,
+                    height: iconSize,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(iconSize * 0.32),
+                      gradient: const LinearGradient(
+                        colors: AppColors.primaryGradient,
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.primary.withValues(alpha: 0.4),
+                          blurRadius: 28,
+                          offset: const Offset(0, 10),
+                        ),
+                      ],
+                    ),
+                    child: Icon(
+                      Icons.directions_run_rounded,
+                      color: Colors.white,
+                      size: iconSize * 0.55,
+                    ),
                   ),
-                ),
-                child: const Icon(
-                  Icons.directions_run_rounded,
-                  color: Colors.white,
-                  size: 52,
-                ),
+                  const SizedBox(height: 28),
+                  const Text(
+                    'RunMate',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 32,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 0.8,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      'วิ่งทุกก้าว มีเป้าหมายเสมอ ✨',
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.85),
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 24),
-              const Text(
-                'RunMate',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 28,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 0.5,
-                ),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                'วิ่งทุกก้าว มีเป้าหมายเสมอ',
-                style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.7),
-                  fontSize: 14,
-                ),
-              ),
-            ],
+            ),
           ),
         ),
       ),

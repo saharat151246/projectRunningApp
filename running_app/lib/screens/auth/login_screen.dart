@@ -69,140 +69,251 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   @override
+  void dispose() {
+    _emailCtrl.dispose();
+    _passCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 16),
-              Container(
-                width: 64,
-                height: 64,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(20),
-                  gradient: const LinearGradient(colors: AppColors.primaryGradient),
-                ),
-                child: const Icon(Icons.directions_run_rounded,
-                    color: Colors.white, size: 34),
-              ),
-              const SizedBox(height: 28),
-              const Text(
-                'ยินดีต้อนรับกลับ 👋',
-                style: TextStyle(
-                  fontSize: 26,
-                  fontWeight: FontWeight.w800,
-                  color: AppColors.textPrimary,
-                ),
-              ),
-              const SizedBox(height: 6),
-              const Text(
-                'เข้าสู่ระบบเพื่อไปต่อกับเป้าหมายการวิ่งของคุณ',
-                style: TextStyle(color: AppColors.textSecondary, fontSize: 14),
-              ),
-              const SizedBox(height: 32),
-              if (_errorText != null) ...[
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.red.withValues(alpha: 0.08),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    _errorText!,
-                    style: const TextStyle(color: Colors.red, fontSize: 12.5),
-                  ),
-                ),
-                const SizedBox(height: 16),
-              ],
-              const Text('อีเมล',
-                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
-              const SizedBox(height: 8),
-              TextField(
-                controller: _emailCtrl,
-                keyboardType: TextInputType.emailAddress,
-                decoration: const InputDecoration(
-                  hintText: 'you@example.com',
-                  prefixIcon: Icon(Icons.mail_outline_rounded, size: 20),
-                ),
-              ),
-              const SizedBox(height: 18),
-              const Text('รหัสผ่าน',
-                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
-              const SizedBox(height: 8),
-              TextField(
-                controller: _passCtrl,
-                obscureText: _obscure,
-                decoration: InputDecoration(
-                  hintText: '••••••••',
-                  prefixIcon: const Icon(Icons.lock_outline_rounded, size: 20),
-                  suffixIcon: IconButton(
-                    icon: Icon(
-                      _obscure
-                          ? Icons.visibility_outlined
-                          : Icons.visibility_off_outlined,
-                      size: 20,
-                    ),
-                    onPressed: () => setState(() => _obscure = !_obscure),
-                  ),
-                ),
-              ),
-              Align(
-                alignment: Alignment.centerRight,
-                child: TextButton(
-                  onPressed: () {},
-                  child: const Text('ลืมรหัสผ่าน?',
-                      style: TextStyle(color: AppColors.primary, fontSize: 13)),
-                ),
-              ),
-              const SizedBox(height: 8),
-              PrimaryButton(label: 'เข้าสู่ระบบ', onPressed: _handleLogin, loading: _loading),
-              const SizedBox(height: 24),
-              Row(
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 440),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Expanded(child: Divider(color: AppColors.divider)),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    child: Text('หรือ', style: TextStyle(color: AppColors.textSecondary.withValues(alpha: 0.8), fontSize: 12.5)),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Container(
+                        width: 58,
+                        height: 58,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(18),
+                          gradient: const LinearGradient(
+                            colors: AppColors.primaryGradient,
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.primary.withValues(alpha: 0.3),
+                              blurRadius: 16,
+                              offset: const Offset(0, 6),
+                            ),
+                          ],
+                        ),
+                        child: const Icon(
+                          Icons.directions_run_rounded,
+                          color: Colors.white,
+                          size: 32,
+                        ),
+                      ),
+                      const SizedBox(width: 14),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'RunMate',
+                            style: TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.w800,
+                              color: AppColors.textPrimary,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                          Text(
+                            'วิ่งด้วยใจ สไตล์มินิมอล',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.textSecondary.withValues(alpha: 0.8),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
-                  const Expanded(child: Divider(color: AppColors.divider)),
-                ],
-              ),
-              const SizedBox(height: 24),
-              SocialLoginButton(
-                label: 'เข้าสู่ระบบด้วย Google',
-                assetIconEmoji: '🔵',
-                onPressed: _loading ? null : _handleGoogleLogin,
-              ),
-              const SizedBox(height: 28),
-              Center(
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Text('ยังไม่มีบัญชี? ',
-                        style: TextStyle(color: AppColors.textSecondary)),
-                    GestureDetector(
-                      onTap: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(builder: (_) => const RegisterScreen()),
-                        );
-                      },
+                  const SizedBox(height: 32),
+                  const Text(
+                    'ยินดีต้อนรับกลับ 👋',
+                    style: TextStyle(
+                      fontSize: 26,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  const Text(
+                    'เข้าสู่ระบบเพื่อไปต่อกับเป้าหมายการวิ่งของคุณ',
+                    style: TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(height: 32),
+                  if (_errorText != null) ...[
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: AppColors.primaryLight,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: AppColors.primary.withValues(alpha: 0.3),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.info_outline_rounded,
+                              color: AppColors.primary, size: 18),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              _errorText!,
+                              style: const TextStyle(
+                                color: AppColors.primaryDark,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                  ],
+                  const Text(
+                    'อีเมล',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 13.5,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: _emailCtrl,
+                    keyboardType: TextInputType.emailAddress,
+                    decoration: const InputDecoration(
+                      hintText: 'you@example.com',
+                      prefixIcon: Icon(Icons.mail_outline_rounded,
+                          size: 20, color: AppColors.textSecondary),
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  const Text(
+                    'รหัสผ่าน',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 13.5,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: _passCtrl,
+                    obscureText: _obscure,
+                    decoration: InputDecoration(
+                      hintText: '••••••••',
+                      prefixIcon: const Icon(Icons.lock_outline_rounded,
+                          size: 20, color: AppColors.textSecondary),
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          _obscure
+                              ? Icons.visibility_outlined
+                              : Icons.visibility_off_outlined,
+                          size: 20,
+                          color: AppColors.textSecondary,
+                        ),
+                        onPressed: () => setState(() => _obscure = !_obscure),
+                      ),
+                    ),
+                  ),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton(
+                      onPressed: () {},
                       child: const Text(
-                        'สมัครสมาชิก',
+                        'ลืมรหัสผ่าน?',
                         style: TextStyle(
                           color: AppColors.primary,
+                          fontSize: 13,
                           fontWeight: FontWeight.w700,
                         ),
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                  const SizedBox(height: 12),
+                  PrimaryButton(
+                    label: 'เข้าสู่ระบบ',
+                    onPressed: _handleLogin,
+                    loading: _loading,
+                  ),
+                  const SizedBox(height: 24),
+                  Row(
+                    children: [
+                      const Expanded(child: Divider(color: AppColors.divider)),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 14),
+                        child: Text(
+                          'หรือ',
+                          style: TextStyle(
+                            color: AppColors.textSecondary,
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                      const Expanded(child: Divider(color: AppColors.divider)),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  SocialLoginButton(
+                    label: 'เข้าสู่ระบบด้วย Google',
+                    assetIconEmoji: '🌐',
+                    onPressed: _loading ? null : _handleGoogleLogin,
+                  ),
+                  const SizedBox(height: 32),
+                  Center(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Text(
+                          'ยังไม่มีบัญชี? ',
+                          style: TextStyle(
+                            color: AppColors.textSecondary,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        GestureDetector(
+                          onTap: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                  builder: (_) => const RegisterScreen()),
+                            );
+                          },
+                          child: const Text(
+                            'สมัครสมาชิก',
+                            style: TextStyle(
+                              color: AppColors.primary,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
         ),
       ),

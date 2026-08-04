@@ -82,6 +82,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final userName = AuthService.instance.currentUser?['name'] as String? ?? 'นักวิ่ง';
 
     return RefreshIndicator(
+      color: AppColors.primary,
       onRefresh: () => Future.wait([_load(), _loadCoach()]),
       child: ListView(
         padding: const EdgeInsets.fromLTRB(20, 16, 20, 100),
@@ -92,24 +93,35 @@ class _HomeScreenState extends State<HomeScreen> {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('สวัสดี ☀️',
-                      style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
-                  const SizedBox(height: 4),
+                  const Text('สวัสดี 👋',
+                      style: TextStyle(color: AppColors.textSecondary, fontSize: 13, fontWeight: FontWeight.w600)),
+                  const SizedBox(height: 2),
                   Text(userName,
                       style: const TextStyle(
-                          fontSize: 22,
+                          fontSize: 24,
                           fontWeight: FontWeight.w800,
                           color: AppColors.textPrimary)),
                 ],
               ),
               Container(
-                width: 44,
-                height: 44,
+                width: 46,
+                height: 46,
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withValues(alpha: 0.12),
+                  gradient: const LinearGradient(
+                    colors: AppColors.primaryGradient,
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
                   shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.primary.withValues(alpha: 0.25),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
                 ),
-                child: const Icon(Icons.person_rounded, color: AppColors.primary),
+                child: const Icon(Icons.person_rounded, color: Colors.white, size: 24),
               ),
             ],
           ),
@@ -180,7 +192,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             value: '${localStats.currentStreakDays}',
                             unit: 'วัน',
                             icon: Icons.local_fire_department_rounded,
-                            color: const Color(0xFFFF5A3C),
+                            color: const Color(0xFFFF6B6B),
                           ),
                         ),
                       ],
@@ -192,18 +204,18 @@ class _HomeScreenState extends State<HomeScreen> {
 
             const SizedBox(height: 28),
             const Text('สรุประยะทาง 7 วันล่าสุด',
-                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
+                style: TextStyle(fontWeight: FontWeight.w800, fontSize: 17)),
             const SizedBox(height: 14),
             Container(
               height: 160,
               padding: const EdgeInsets.fromLTRB(12, 16, 12, 8),
               decoration: BoxDecoration(
                 color: AppColors.surface,
-                borderRadius: BorderRadius.circular(18),
+                borderRadius: BorderRadius.circular(20),
                 boxShadow: [
                   BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.04),
-                      blurRadius: 12,
+                      color: Colors.black.withValues(alpha: 0.03),
+                      blurRadius: 14,
                       offset: const Offset(0, 4)),
                 ],
               ),
@@ -233,7 +245,9 @@ class _HomeScreenState extends State<HomeScreen> {
                             padding: const EdgeInsets.only(top: 6),
                             child: Text(_weekdayLabel(summary.weekLabels[i]),
                                 style: const TextStyle(
-                                    fontSize: 11, color: AppColors.textSecondary)),
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.textSecondary)),
                           );
                         },
                       ),
@@ -245,8 +259,8 @@ class _HomeScreenState extends State<HomeScreen> {
                       barRods: [
                         BarChartRodData(
                           toY: summary.weeklyDistance[i],
-                          width: 18,
-                          borderRadius: BorderRadius.circular(6),
+                          width: 16,
+                          borderRadius: BorderRadius.circular(8),
                           gradient: const LinearGradient(
                             colors: AppColors.primaryGradient,
                             begin: Alignment.bottomCenter,
@@ -262,56 +276,63 @@ class _HomeScreenState extends State<HomeScreen> {
 
             const SizedBox(height: 28),
 
-            // AI Coach - คำแนะนำจริงจาก Gemini (fallback เป็น rule-based ถ้า Gemini ใช้ไม่ได้)
+            // AI Coach - คำแนะนำจริงจาก Gemini
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.all(18),
+              padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(18),
+                borderRadius: BorderRadius.circular(20),
                 gradient: const LinearGradient(
                   colors: AppColors.darkGradient,
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.secondary.withValues(alpha: 0.25),
+                    blurRadius: 18,
+                    offset: const Offset(0, 6),
+                  ),
+                ],
               ),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(8),
+                    padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(10),
+                      color: AppColors.accent.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(14),
                     ),
                     child: const Icon(Icons.psychology_alt_rounded,
-                        color: AppColors.accent, size: 22),
+                        color: AppColors.accentLight, size: 24),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: 14),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Row(
                           children: [
-                            const Text('AI Coach แนะนำ',
+                            const Text('คำแนะนำฝึกซ้อมประจำวัน',
                                 style: TextStyle(
                                     color: Colors.white,
-                                    fontWeight: FontWeight.w700,
-                                    fontSize: 14)),
+                                    fontWeight: FontWeight.w800,
+                                    fontSize: 15)),
                             if (!_coachLoading && _coach?.source == 'gemini') ...[
                               const SizedBox(width: 6),
                               Container(
                                 padding:
-                                    const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                    const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                                 decoration: BoxDecoration(
-                                  color: AppColors.accent.withValues(alpha: 0.2),
-                                  borderRadius: BorderRadius.circular(6),
+                                  color: AppColors.accent.withValues(alpha: 0.3),
+                                  borderRadius: BorderRadius.circular(8),
                                 ),
-                                child: const Text('AI',
+                                child: const Text('Gemini',
                                     style: TextStyle(
-                                        color: AppColors.accent,
-                                        fontSize: 9,
-                                        fontWeight: FontWeight.w700)),
+                                        color: AppColors.accentLight,
+                                        fontSize: 9.5,
+                                        fontWeight: FontWeight.w800)),
                               ),
                             ],
                           ],
@@ -340,28 +361,12 @@ class _HomeScreenState extends State<HomeScreen> {
                                 ? _coach!.advice
                                 : 'ยังไม่มีคำแนะนำในตอนนี้ ลองวิ่งดูสักครั้งแล้วกลับมาดูอีกครั้ง',
                             style: TextStyle(
-                              color: Colors.white.withValues(alpha: 0.85),
+                              color: Colors.white.withValues(alpha: 0.9),
                               fontSize: 13,
-                              height: 1.5,
+                              height: 1.45,
+                              fontWeight: FontWeight.w500,
                             ),
                           ),
-                        const SizedBox(height: 12),
-                        Align(
-                          alignment: Alignment.centerLeft,
-                          child: OutlinedButton.icon(
-                            onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('เปิดแชท AI Coach ได้จากปุ่มลอยด้านขวาล่าง')),
-                            ),
-                            style: OutlinedButton.styleFrom(
-                              minimumSize: Size.zero,
-                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                              side: BorderSide(color: Colors.white.withValues(alpha: 0.3)),
-                              foregroundColor: Colors.white,
-                            ),
-                            icon: const Icon(Icons.chat_bubble_outline_rounded, size: 16),
-                            label: const Text('เปิดจากปุ่มแชทด้านขวา', style: TextStyle(fontSize: 12.5)),
-                          ),
-                        ),
                       ],
                     ),
                   ),
@@ -374,20 +379,20 @@ class _HomeScreenState extends State<HomeScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text('การวิ่งล่าสุด',
-                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
+                    style: TextStyle(fontWeight: FontWeight.w800, fontSize: 17)),
               ],
             ),
             const SizedBox(height: 12),
             if (_recentRuns.isEmpty)
               Container(
-                padding: const EdgeInsets.all(20),
+                padding: const EdgeInsets.all(22),
                 decoration: BoxDecoration(
                   color: AppColors.surface,
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(20),
                 ),
                 child: const Center(
-                  child: Text('ยังไม่มีประวัติการวิ่ง ลองไปกดเริ่มวิ่งดูก่อนเลย!',
-                      style: TextStyle(color: AppColors.textSecondary, fontSize: 12.5)),
+                  child: Text('ยังไม่มีประวัติการวิ่ง ลองไปกดเริ่มวิ่งดูก่อนเลย! 🏃',
+                      style: TextStyle(color: AppColors.textSecondary, fontSize: 13, fontWeight: FontWeight.w600)),
                 ),
               )
             else
@@ -401,30 +406,30 @@ class _HomeScreenState extends State<HomeScreen> {
                     },
                     child: Container(
                     margin: const EdgeInsets.only(bottom: 10),
-                    padding: const EdgeInsets.all(14),
+                    padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
                       color: AppColors.surface,
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(20),
                       boxShadow: [
                         BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.03),
-                            blurRadius: 8,
+                            color: Colors.black.withValues(alpha: 0.025),
+                            blurRadius: 10,
                             offset: const Offset(0, 3)),
                       ],
                     ),
                     child: Row(
                       children: [
                         Container(
-                          width: 42,
-                          height: 42,
+                          width: 44,
+                          height: 44,
                           decoration: BoxDecoration(
-                            color: AppColors.accent.withValues(alpha: 0.12),
-                            borderRadius: BorderRadius.circular(12),
+                            color: AppColors.primaryLight,
+                            borderRadius: BorderRadius.circular(14),
                           ),
                           child: const Icon(Icons.directions_run_rounded,
-                              color: AppColors.accent, size: 20),
+                              color: AppColors.primary, size: 22),
                         ),
-                        const SizedBox(width: 12),
+                        const SizedBox(width: 14),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -432,16 +437,18 @@ class _HomeScreenState extends State<HomeScreen> {
                               Text(
                                   '${run.distanceKm.toStringAsFixed(2)} กม. • ${_formatDuration(run.durationSec)}',
                                   style: const TextStyle(
-                                      fontWeight: FontWeight.w700, fontSize: 14)),
+                                      fontWeight: FontWeight.w800, fontSize: 14.5)),
                               const SizedBox(height: 2),
                               Text(_formatDate(run.startTime),
                                   style: const TextStyle(
-                                      fontSize: 12, color: AppColors.textSecondary)),
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                      color: AppColors.textSecondary)),
                             ],
                           ),
                         ),
                         const Icon(Icons.chevron_right_rounded,
-                            color: AppColors.textSecondary, size: 20),
+                            color: AppColors.textSecondary, size: 22),
                       ],
                     ),
                   ))),

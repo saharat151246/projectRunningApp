@@ -68,15 +68,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final summary = _summary ?? RunSummary.empty();
 
     return RefreshIndicator(
+      color: AppColors.primary,
       onRefresh: _load,
       child: ListView(
         padding: const EdgeInsets.fromLTRB(20, 16, 20, 100),
         children: [
           const Text('สถิติของฉัน',
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800)),
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800)),
           const SizedBox(height: 4),
-          const Text('ภาพรวมความก้าวหน้าการวิ่งทั้งหมด (ข้อมูลจริงจากฐานข้อมูล)',
-              style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
+          const Text('ภาพรวมความก้าวหน้าการวิ่งทั้งหมด',
+              style: TextStyle(color: AppColors.textSecondary, fontSize: 13, fontWeight: FontWeight.w600)),
           const SizedBox(height: 24),
 
           if (_loading)
@@ -86,15 +87,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
             )
           else ...[
             Container(
-              height: 200,
-              padding: const EdgeInsets.fromLTRB(8, 20, 16, 12),
+              height: 210,
+              padding: const EdgeInsets.fromLTRB(12, 20, 16, 12),
               decoration: BoxDecoration(
                 color: AppColors.surface,
-                borderRadius: BorderRadius.circular(18),
+                borderRadius: BorderRadius.circular(20),
                 boxShadow: [
                   BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.04),
-                      blurRadius: 12,
+                      color: Colors.black.withValues(alpha: 0.03),
+                      blurRadius: 14,
                       offset: const Offset(0, 4)),
                 ],
               ),
@@ -118,7 +119,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             padding: const EdgeInsets.only(top: 6),
                             child: Text(_weekdayLabel(summary.weekLabels[i]),
                                 style: const TextStyle(
-                                    fontSize: 11, color: AppColors.textSecondary)),
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.textSecondary)),
                           );
                         },
                       ),
@@ -131,12 +134,29 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         (i) => FlSpot(i.toDouble(), summary.weeklyDistance[i]),
                       ),
                       isCurved: true,
+                      curveSmoothness: 0.35,
                       color: AppColors.primary,
-                      barWidth: 3,
-                      dotData: const FlDotData(show: true),
+                      barWidth: 3.5,
+                      dotData: FlDotData(
+                        show: true,
+                        getDotPainter: (spot, percent, barData, index) =>
+                            FlDotCirclePainter(
+                          radius: 5,
+                          color: AppColors.primary,
+                          strokeWidth: 2.5,
+                          strokeColor: Colors.white,
+                        ),
+                      ),
                       belowBarData: BarAreaData(
                         show: true,
-                        color: AppColors.primary.withValues(alpha: 0.1),
+                        gradient: LinearGradient(
+                          colors: [
+                            AppColors.primary.withValues(alpha: 0.25),
+                            AppColors.primary.withValues(alpha: 0.0),
+                          ],
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                        ),
                       ),
                     ),
                   ],
@@ -146,19 +166,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
             const SizedBox(height: 28),
             const Text('ประวัติการวิ่งทั้งหมด',
-                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
+                style: TextStyle(fontWeight: FontWeight.w800, fontSize: 17)),
             const SizedBox(height: 12),
 
             if (_runs.isEmpty)
               Container(
-                padding: const EdgeInsets.all(20),
+                padding: const EdgeInsets.all(22),
                 decoration: BoxDecoration(
                   color: AppColors.surface,
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(20),
                 ),
                 child: const Center(
                   child: Text('ยังไม่มีประวัติการวิ่ง',
-                      style: TextStyle(color: AppColors.textSecondary, fontSize: 12.5)),
+                      style: TextStyle(color: AppColors.textSecondary, fontSize: 13, fontWeight: FontWeight.w600)),
                 ),
               )
             else
@@ -175,11 +195,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
                       color: AppColors.surface,
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(20),
                       boxShadow: [
                         BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.03),
-                            blurRadius: 8,
+                            color: Colors.black.withValues(alpha: 0.025),
+                            blurRadius: 10,
                             offset: const Offset(0, 3)),
                       ],
                     ),
@@ -189,11 +209,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           width: 46,
                           height: 46,
                           decoration: BoxDecoration(
-                            color: AppColors.primary.withValues(alpha: 0.1),
+                            color: AppColors.primaryLight,
                             borderRadius: BorderRadius.circular(14),
                           ),
                           child: const Icon(Icons.directions_run_rounded,
-                              color: AppColors.primary),
+                              color: AppColors.primary, size: 22),
                         ),
                         const SizedBox(width: 14),
                         Expanded(
@@ -202,18 +222,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             children: [
                               Text(_formatDate(run.startTime),
                                   style: const TextStyle(
-                                      fontWeight: FontWeight.w700, fontSize: 13.5)),
+                                      fontWeight: FontWeight.w800, fontSize: 14.5)),
                               const SizedBox(height: 4),
                               Text(
                                 '${run.distanceKm.toStringAsFixed(2)} กม. • ${_formatDuration(run.durationSec)} • ${_formatPace(run.avgPace)}',
                                 style: const TextStyle(
-                                    fontSize: 12, color: AppColors.textSecondary),
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.textSecondary),
                               ),
                             ],
                           ),
                         ),
                         const Icon(Icons.chevron_right_rounded,
-                            color: AppColors.textSecondary),
+                            color: AppColors.textSecondary, size: 22),
                       ],
                     ),
                   ))),

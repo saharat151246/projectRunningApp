@@ -1,32 +1,22 @@
-import 'dart:io' show Platform;
-import 'package:flutter/foundation.dart' show kIsWeb;
-
 /// ตั้งค่า Base URL ของ Backend API
-///
-/// สำคัญ: ที่อยู่ "localhost" มีความหมายต่างกันไปตามที่รันแอป
-/// - Android Emulator: ต้องใช้ 10.0.2.2 (ชี้กลับไปที่เครื่อง host)
-/// - iOS Simulator: ใช้ localhost ได้ตรงๆ
-/// - Web (Chrome): ใช้ localhost ได้ตรงๆ
-/// - อุปกรณ์จริง (มือถือจริงต่อ USB/WiFi): ต้องใช้ IP ของเครื่องคอมพิวเตอร์ในวง LAN
-///   เช่น 192.168.1.xx (เช็คได้จาก `ipconfig` บน Windows) แล้วต้องอยู่วง WiFi เดียวกัน
 class ApiConfig {
+  /// Production URL (Render.com)
+  static const String _productionUrl =
+      'https://running-app-backend-1ck1.onrender.com/api';
+
+  /// สามารถ override URL สำหรับพัฒนาบน local ได้:
+  /// flutter run --dart-define=API_URL=http://192.168.1.XX:5000/api
+  static const String _envUrl = String.fromEnvironment('API_URL');
+
+  /// ถ้ามี --dart-define จะใช้ค่านั้น, ถ้าไม่มีจะใช้ Production URL
   static String get baseUrl {
-    const port = 5000;
-    if (kIsWeb) {
-      return 'http://localhost:$port/api';
+    if (_envUrl.isNotEmpty) {
+      return _envUrl;
     }
-    if (Platform.isAndroid) {
-      // TODO: ถ้าทดสอบบนมือถือจริง ให้เปลี่ยนเป็น IP เครื่องคอมพิวเตอร์ในวง LAN แทน
-      return 'http://10.84.88.60:$port/api';
-    }
-    // iOS Simulator และแพลตฟอร์มอื่นๆ
-    return 'http://localhost:$port/api';
+    return _productionUrl;
   }
 
   /// Web application Client ID จาก Google Cloud Console
-  /// (คนละตัวกับ Android Client ID — ต้องเป็นตัว "Web application" เท่านั้น)
-  /// ใช้เป็น serverClientId ตอน initialize GoogleSignIn เพื่อให้ idToken ที่ได้
-  /// มี audience ตรงกับที่ backend ใช้ verify (ต้องเป็นค่าเดียวกับ GOOGLE_CLIENT_ID ใน backend .env)
   static const googleWebClientId =
       '385307095607-63kma56bh9es5ib9aqgcn690t940u30q.apps.googleusercontent.com';
 }
