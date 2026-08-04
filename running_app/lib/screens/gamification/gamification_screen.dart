@@ -67,18 +67,18 @@ class _GamificationScreenState extends State<GamificationScreen> {
             children: [
               const Text('ภารกิจและเหรียญตรา 🏆', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800)),
               const SizedBox(height: 4),
-              const Text('สร้างเป้าหมายของคุณ และเก็บแต้มจากทุกก้าวที่ทำสำเร็จ', style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
+              Text('สร้างเป้าหมายของคุณ และเก็บแต้มจากทุกก้าวที่ทำสำเร็จ', style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
               const SizedBox(height: 20),
               _pointsCard(data),
               const SizedBox(height: 24),
               const Text('ภารกิจของฉัน', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 17)),
               const SizedBox(height: 5),
-              const Text('ความคืบหน้าจะรีเซ็ตตามรอบที่เลือก', style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+              Text('ความคืบหน้าจะรีเซ็ตตามรอบที่เลือก', style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
               const SizedBox(height: 14),
               _frequencyTabs(),
               const SizedBox(height: 14),
               if (_loading)
-                const Padding(padding: EdgeInsets.all(40), child: Center(child: CircularProgressIndicator(color: AppColors.primary)))
+                Padding(padding: EdgeInsets.all(40), child: Center(child: CircularProgressIndicator(color: AppColors.primary)))
               else if (personal.isEmpty)
                 _emptyMission(label)
               else
@@ -121,7 +121,7 @@ class _GamificationScreenState extends State<GamificationScreen> {
     padding: const EdgeInsets.all(20),
     decoration: BoxDecoration(
       borderRadius: BorderRadius.circular(22),
-      gradient: const LinearGradient(
+      gradient: LinearGradient(
         colors: AppColors.goldGradient,
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
@@ -166,7 +166,7 @@ class _GamificationScreenState extends State<GamificationScreen> {
               color: _frequency == item.$1 ? AppColors.primary : Colors.transparent,
               borderRadius: BorderRadius.circular(12),
               boxShadow: _frequency == item.$1
-                  ? [BoxShadow(color: AppColors.primary.withValues(alpha: 0.3), blurRadius: 10, offset: const Offset(0, 4))]
+                  ? [BoxShadow(color: AppColors.primary.withValues(alpha: 0.3), blurRadius: 10, offset: Offset(0, 4))]
                   : null,
             ),
             child: Text(item.$2, textAlign: TextAlign.center, style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w800, color: _frequency == item.$1 ? Colors.white : AppColors.textSecondary)),
@@ -176,21 +176,21 @@ class _GamificationScreenState extends State<GamificationScreen> {
   );
 
   Widget _emptyMission(String label) => Container(
-    padding: const EdgeInsets.all(24), decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(20)),
+    padding: EdgeInsets.all(24), decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(20)),
     child: Column(children: [
-      const Icon(Icons.flag_outlined, color: AppColors.primary, size: 34), const SizedBox(height: 10),
+      Icon(Icons.flag_outlined, color: AppColors.primary, size: 34), SizedBox(height: 10),
       Text('ยังไม่มีภารกิจ$label', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15)), const SizedBox(height: 4),
-      const Text('กด “สร้างภารกิจ” เพื่อเริ่มตั้งเป้าหมาย', style: TextStyle(fontSize: 12.5, color: AppColors.textSecondary, fontWeight: FontWeight.w500)),
+      Text('กด “สร้างภารกิจ” เพื่อเริ่มตั้งเป้าหมาย', style: TextStyle(fontSize: 12.5, color: AppColors.textSecondary, fontWeight: FontWeight.w500)),
     ]),
   );
 
   Widget _missionCard(MissionItem m, {bool personal = false}) => Container(
     margin: const EdgeInsets.only(bottom: 12), padding: const EdgeInsets.all(16),
-    decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(20), boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: .025), blurRadius: 10, offset: const Offset(0, 3))]),
+    decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(20), boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: .025), blurRadius: 10, offset: Offset(0, 3))]),
     child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       Row(children: [
         Expanded(child: Text(m.title, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14.5))),
-        if (personal) IconButton(onPressed: () => _deleteMission(m), icon: const Icon(Icons.close_rounded, size: 18, color: AppColors.textSecondary), tooltip: 'ลบภารกิจ')
+        if (personal) IconButton(onPressed: () => _deleteMission(m), icon: Icon(Icons.close_rounded, size: 18, color: AppColors.textSecondary), tooltip: 'ลบภารกิจ')
         else _reward(m),
       ]),
       if (personal) Align(alignment: Alignment.centerRight, child: _reward(m)),
@@ -201,9 +201,9 @@ class _GamificationScreenState extends State<GamificationScreen> {
     ]),
   );
 
-  Widget _reward(MissionItem m) => Container(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4), decoration: BoxDecoration(color: (m.completed ? AppColors.gold : AppColors.accent).withValues(alpha: .12), borderRadius: BorderRadius.circular(10)), child: Text(m.completed ? 'สำเร็จ ✓' : '+${m.reward} pt', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800, color: m.completed ? AppColors.gold : AppColors.accent)));
+  Widget _reward(MissionItem m) => Container(padding: EdgeInsets.symmetric(horizontal: 10, vertical: 4), decoration: BoxDecoration(color: (m.completed ? AppColors.gold : AppColors.accent).withValues(alpha: .12), borderRadius: BorderRadius.circular(10)), child: Text(m.completed ? 'สำเร็จ ✓' : '+${m.reward} pt', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800, color: m.completed ? AppColors.gold : AppColors.accent)));
 
-  Widget _badge(BadgeItem b) => Container(decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(20), border: Border.all(color: b.unlocked ? AppColors.gold.withValues(alpha: .5) : AppColors.divider, width: b.unlocked ? 1.5 : 1)), child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [Opacity(opacity: b.unlocked ? 1 : .25, child: Text(b.emoji, style: const TextStyle(fontSize: 32))), const SizedBox(height: 6), Text(b.title, textAlign: TextAlign.center, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: b.unlocked ? AppColors.textPrimary : AppColors.textSecondary))]));
+  Widget _badge(BadgeItem b) => Container(decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(20), border: Border.all(color: b.unlocked ? AppColors.gold.withValues(alpha: .5) : AppColors.divider, width: b.unlocked ? 1.5 : 1)), child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [Opacity(opacity: b.unlocked ? 1 : .25, child: Text(b.emoji, style: TextStyle(fontSize: 32))), SizedBox(height: 6), Text(b.title, textAlign: TextAlign.center, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: b.unlocked ? AppColors.textPrimary : AppColors.textSecondary))]));
 }
 
 class _MissionDraft {

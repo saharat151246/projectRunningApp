@@ -96,7 +96,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         height: 58,
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(18),
-                          gradient: const LinearGradient(
+                          gradient: LinearGradient(
                             colors: AppColors.primaryGradient,
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
@@ -119,7 +119,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
+                          Text(
                             'RunMate',
                             style: TextStyle(
                               fontSize: 22,
@@ -141,7 +141,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ],
                   ),
                   const SizedBox(height: 32),
-                  const Text(
+                  Text(
                     'ยินดีต้อนรับกลับ 👋',
                     style: TextStyle(
                       fontSize: 26,
@@ -150,7 +150,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                   const SizedBox(height: 6),
-                  const Text(
+                  Text(
                     'เข้าสู่ระบบเพื่อไปต่อกับเป้าหมายการวิ่งของคุณ',
                     style: TextStyle(
                       color: AppColors.textSecondary,
@@ -172,13 +172,13 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       child: Row(
                         children: [
-                          const Icon(Icons.info_outline_rounded,
+                          Icon(Icons.info_outline_rounded,
                               color: AppColors.primary, size: 18),
                           const SizedBox(width: 10),
                           Expanded(
                             child: Text(
                               _errorText!,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 color: AppColors.primaryDark,
                                 fontSize: 13,
                                 fontWeight: FontWeight.w600,
@@ -190,7 +190,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     const SizedBox(height: 20),
                   ],
-                  const Text(
+                  Text(
                     'อีเมล',
                     style: TextStyle(
                       fontWeight: FontWeight.w700,
@@ -202,14 +202,14 @@ class _LoginScreenState extends State<LoginScreen> {
                   TextField(
                     controller: _emailCtrl,
                     keyboardType: TextInputType.emailAddress,
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       hintText: 'you@example.com',
                       prefixIcon: Icon(Icons.mail_outline_rounded,
                           size: 20, color: AppColors.textSecondary),
                     ),
                   ),
                   const SizedBox(height: 18),
-                  const Text(
+                  Text(
                     'รหัสผ่าน',
                     style: TextStyle(
                       fontWeight: FontWeight.w700,
@@ -223,7 +223,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     obscureText: _obscure,
                     decoration: InputDecoration(
                       hintText: '••••••••',
-                      prefixIcon: const Icon(Icons.lock_outline_rounded,
+                      prefixIcon: Icon(Icons.lock_outline_rounded,
                           size: 20, color: AppColors.textSecondary),
                       suffixIcon: IconButton(
                         icon: Icon(
@@ -241,7 +241,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     alignment: Alignment.centerRight,
                     child: TextButton(
                       onPressed: () {},
-                      child: const Text(
+                      child: Text(
                         'ลืมรหัสผ่าน?',
                         style: TextStyle(
                           color: AppColors.primary,
@@ -260,7 +260,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   const SizedBox(height: 24),
                   Row(
                     children: [
-                      const Expanded(child: Divider(color: AppColors.divider)),
+                      Expanded(child: Divider(color: AppColors.divider)),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 14),
                         child: Text(
@@ -272,7 +272,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                         ),
                       ),
-                      const Expanded(child: Divider(color: AppColors.divider)),
+                      Expanded(child: Divider(color: AppColors.divider)),
                     ],
                   ),
                   const SizedBox(height: 24),
@@ -286,7 +286,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Text(
+                        Text(
                           'ยังไม่มีบัญชี? ',
                           style: TextStyle(
                             color: AppColors.textSecondary,
@@ -300,7 +300,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                   builder: (_) => const RegisterScreen()),
                             );
                           },
-                          child: const Text(
+                          child: Text(
                             'สมัครสมาชิก',
                             style: TextStyle(
                               color: AppColors.primary,

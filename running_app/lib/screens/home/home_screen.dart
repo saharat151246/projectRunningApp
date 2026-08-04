@@ -93,11 +93,11 @@ class _HomeScreenState extends State<HomeScreen> {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('สวัสดี 👋',
+                  Text('สวัสดี 👋',
                       style: TextStyle(color: AppColors.textSecondary, fontSize: 13, fontWeight: FontWeight.w600)),
                   const SizedBox(height: 2),
                   Text(userName,
-                      style: const TextStyle(
+                      style: TextStyle(
                           fontSize: 24,
                           fontWeight: FontWeight.w800,
                           color: AppColors.textPrimary)),
@@ -107,7 +107,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 width: 46,
                 height: 46,
                 decoration: BoxDecoration(
-                  gradient: const LinearGradient(
+                  gradient: LinearGradient(
                     colors: AppColors.primaryGradient,
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
@@ -138,7 +138,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
 
           if (_loading)
-            const Padding(
+            Padding(
               padding: EdgeInsets.symmetric(vertical: 40),
               child: Center(child: CircularProgressIndicator(color: AppColors.primary)),
             )
@@ -244,7 +244,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           return Padding(
                             padding: const EdgeInsets.only(top: 6),
                             child: Text(_weekdayLabel(summary.weekLabels[i]),
-                                style: const TextStyle(
+                                style: TextStyle(
                                     fontSize: 11,
                                     fontWeight: FontWeight.w600,
                                     color: AppColors.textSecondary)),
@@ -261,7 +261,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           toY: summary.weeklyDistance[i],
                           width: 16,
                           borderRadius: BorderRadius.circular(8),
-                          gradient: const LinearGradient(
+                          gradient: LinearGradient(
                             colors: AppColors.primaryGradient,
                             begin: Alignment.bottomCenter,
                             end: Alignment.topCenter,
@@ -282,7 +282,7 @@ class _HomeScreenState extends State<HomeScreen> {
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(20),
-                gradient: const LinearGradient(
+                gradient: LinearGradient(
                   colors: AppColors.darkGradient,
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
@@ -304,7 +304,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       color: AppColors.accent.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(14),
                     ),
-                    child: const Icon(Icons.psychology_alt_rounded,
+                    child: Icon(Icons.psychology_alt_rounded,
                         color: AppColors.accentLight, size: 24),
                   ),
                   const SizedBox(width: 14),
@@ -328,7 +328,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                   color: AppColors.accent.withValues(alpha: 0.3),
                                   borderRadius: BorderRadius.circular(8),
                                 ),
-                                child: const Text('Gemini',
+                                child: Text('Gemini',
                                     style: TextStyle(
                                         color: AppColors.accentLight,
                                         fontSize: 9.5,
@@ -390,7 +390,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   color: AppColors.surface,
                   borderRadius: BorderRadius.circular(20),
                 ),
-                child: const Center(
+                child: Center(
                   child: Text('ยังไม่มีประวัติการวิ่ง ลองไปกดเริ่มวิ่งดูก่อนเลย! 🏃',
                       style: TextStyle(color: AppColors.textSecondary, fontSize: 13, fontWeight: FontWeight.w600)),
                 ),
@@ -426,7 +426,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             color: AppColors.primaryLight,
                             borderRadius: BorderRadius.circular(14),
                           ),
-                          child: const Icon(Icons.directions_run_rounded,
+                          child: Icon(Icons.directions_run_rounded,
                               color: AppColors.primary, size: 22),
                         ),
                         const SizedBox(width: 14),
@@ -440,14 +440,14 @@ class _HomeScreenState extends State<HomeScreen> {
                                       fontWeight: FontWeight.w800, fontSize: 14.5)),
                               const SizedBox(height: 2),
                               Text(_formatDate(run.startTime),
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                       fontSize: 12,
                                       fontWeight: FontWeight.w600,
                                       color: AppColors.textSecondary)),
                             ],
                           ),
                         ),
-                        const Icon(Icons.chevron_right_rounded,
+                        Icon(Icons.chevron_right_rounded,
                             color: AppColors.textSecondary, size: 22),
                       ],
                     ),

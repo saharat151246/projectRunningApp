@@ -98,7 +98,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     'สร้างบัญชีใหม่ 🚀',
                     style: TextStyle(
                       fontSize: 26,
@@ -107,7 +107,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ),
                   ),
                   const SizedBox(height: 6),
-                  const Text(
+                  Text(
                     'เริ่มต้นเก็บสถิติการวิ่งของคุณตั้งแต่วันนี้',
                     style: TextStyle(
                       color: AppColors.textSecondary,
@@ -129,13 +129,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       ),
                       child: Row(
                         children: [
-                          const Icon(Icons.info_outline_rounded,
+                          Icon(Icons.info_outline_rounded,
                               color: AppColors.primary, size: 18),
                           const SizedBox(width: 10),
                           Expanded(
                             child: Text(
                               _errorText!,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 color: AppColors.primaryDark,
                                 fontSize: 13,
                                 fontWeight: FontWeight.w600,
@@ -147,7 +147,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ),
                     const SizedBox(height: 20),
                   ],
-                  const Text(
+                  Text(
                     'ชื่อ-นามสกุล',
                     style: TextStyle(
                       fontWeight: FontWeight.w700,
@@ -158,14 +158,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   const SizedBox(height: 8),
                   TextField(
                     controller: _nameCtrl,
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       hintText: 'สมชาย ใจดี',
                       prefixIcon: Icon(Icons.person_outline_rounded,
                           size: 20, color: AppColors.textSecondary),
                     ),
                   ),
                   const SizedBox(height: 18),
-                  const Text(
+                  Text(
                     'อีเมล',
                     style: TextStyle(
                       fontWeight: FontWeight.w700,
@@ -177,14 +177,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   TextField(
                     controller: _emailCtrl,
                     keyboardType: TextInputType.emailAddress,
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       hintText: 'you@example.com',
                       prefixIcon: Icon(Icons.mail_outline_rounded,
                           size: 20, color: AppColors.textSecondary),
                     ),
                   ),
                   const SizedBox(height: 18),
-                  const Text(
+                  Text(
                     'รหัสผ่าน',
                     style: TextStyle(
                       fontWeight: FontWeight.w700,
@@ -198,7 +198,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     obscureText: _obscure,
                     decoration: InputDecoration(
                       hintText: 'อย่างน้อย 8 ตัวอักษร',
-                      prefixIcon: const Icon(Icons.lock_outline_rounded,
+                      prefixIcon: Icon(Icons.lock_outline_rounded,
                           size: 20, color: AppColors.textSecondary),
                       suffixIcon: IconButton(
                         icon: Icon(
@@ -221,7 +221,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   const SizedBox(height: 24),
                   Row(
                     children: [
-                      const Expanded(child: Divider(color: AppColors.divider)),
+                      Expanded(child: Divider(color: AppColors.divider)),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 14),
                         child: Text(
@@ -233,7 +233,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           ),
                         ),
                       ),
-                      const Expanded(child: Divider(color: AppColors.divider)),
+                      Expanded(child: Divider(color: AppColors.divider)),
                     ],
                   ),
                   const SizedBox(height: 24),
@@ -249,7 +249,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Text(
+                          Text(
                             'มีบัญชีอยู่แล้ว? ',
                             style: TextStyle(
                               color: AppColors.textSecondary,
@@ -258,7 +258,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           ),
                           GestureDetector(
                             onTap: () => Navigator.of(context).pop(),
-                            child: const Text(
+                            child: Text(
                               'เข้าสู่ระบบ',
                               style: TextStyle(
                                 color: AppColors.primary,

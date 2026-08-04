@@ -76,12 +76,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
           const Text('สถิติของฉัน',
               style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800)),
           const SizedBox(height: 4),
-          const Text('ภาพรวมความก้าวหน้าการวิ่งทั้งหมด',
+          Text('ภาพรวมความก้าวหน้าการวิ่งทั้งหมด',
               style: TextStyle(color: AppColors.textSecondary, fontSize: 13, fontWeight: FontWeight.w600)),
           const SizedBox(height: 24),
 
           if (_loading)
-            const Padding(
+            Padding(
               padding: EdgeInsets.symmetric(vertical: 60),
               child: Center(child: CircularProgressIndicator(color: AppColors.primary)),
             )
@@ -118,7 +118,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           return Padding(
                             padding: const EdgeInsets.only(top: 6),
                             child: Text(_weekdayLabel(summary.weekLabels[i]),
-                                style: const TextStyle(
+                                style: TextStyle(
                                     fontSize: 11,
                                     fontWeight: FontWeight.w600,
                                     color: AppColors.textSecondary)),
@@ -176,7 +176,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   color: AppColors.surface,
                   borderRadius: BorderRadius.circular(20),
                 ),
-                child: const Center(
+                child: Center(
                   child: Text('ยังไม่มีประวัติการวิ่ง',
                       style: TextStyle(color: AppColors.textSecondary, fontSize: 13, fontWeight: FontWeight.w600)),
                 ),
@@ -212,7 +212,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             color: AppColors.primaryLight,
                             borderRadius: BorderRadius.circular(14),
                           ),
-                          child: const Icon(Icons.directions_run_rounded,
+                          child: Icon(Icons.directions_run_rounded,
                               color: AppColors.primary, size: 22),
                         ),
                         const SizedBox(width: 14),
@@ -226,7 +226,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               const SizedBox(height: 4),
                               Text(
                                 '${run.distanceKm.toStringAsFixed(2)} กม. • ${_formatDuration(run.durationSec)} • ${_formatPace(run.avgPace)}',
-                                style: const TextStyle(
+                                style: TextStyle(
                                     fontSize: 12,
                                     fontWeight: FontWeight.w600,
                                     color: AppColors.textSecondary),
@@ -234,7 +234,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             ],
                           ),
                         ),
-                        const Icon(Icons.chevron_right_rounded,
+                        Icon(Icons.chevron_right_rounded,
                             color: AppColors.textSecondary, size: 22),
                       ],
                     ),

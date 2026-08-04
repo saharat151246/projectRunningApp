@@ -81,7 +81,7 @@ class _CoachChatScreenState extends State<CoachChatScreen> {
       backgroundColor: AppColors.background,
       appBar: AppBar(
         backgroundColor: AppColors.background,
-        title: const Row(
+        title: Row(
           children: [
             Icon(Icons.psychology_alt_rounded, color: AppColors.accent, size: 22),
             SizedBox(width: 8),
@@ -151,7 +151,7 @@ class _CoachChatScreenState extends State<CoachChatScreen> {
           color: AppColors.surface,
           borderRadius: BorderRadius.circular(18),
         ),
-        child: const SizedBox(
+        child: SizedBox(
           width: 24,
           height: 12,
           child: Center(
@@ -198,7 +198,7 @@ class _CoachChatScreenState extends State<CoachChatScreen> {
             ),
             const SizedBox(width: 8),
             Container(
-              decoration: const BoxDecoration(
+              decoration: BoxDecoration(
                 color: AppColors.primary,
                 shape: BoxShape.circle,
               ),

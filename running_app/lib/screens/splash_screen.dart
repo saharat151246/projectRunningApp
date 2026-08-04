@@ -5,7 +5,11 @@ import 'onboarding_screen.dart';
 import 'main_navigation.dart';
 
 class SplashScreen extends StatefulWidget {
-  const SplashScreen({super.key});
+  /// true เมื่อ rebuild เกิดจากการสลับโหมดสี (ไม่ใช่เปิดแอปครั้งแรก)
+  /// จะข้าม delay หน่วงเวลาไป ให้เด้งกลับหน้าที่ควรอยู่ทันที
+  final bool skipIntro;
+
+  const SplashScreen({super.key, this.skipIntro = false});
 
   @override
   State<SplashScreen> createState() => _SplashScreenState();
@@ -28,18 +32,29 @@ class _SplashScreenState extends State<SplashScreen>
     _scaleAnim = Tween<double>(begin: 0.85, end: 1.0).animate(
       CurvedAnimation(parent: _animCtrl, curve: Curves.easeOutBack),
     );
-    _animCtrl.forward();
+    if (widget.skipIntro) {
+      _animCtrl.value = 1.0;
+    } else {
+      _animCtrl.forward();
+    }
     _init();
   }
 
   Future<void> _init() async {
     final loggedIn = await AuthService.instance.tryAutoLogin();
-    await Future.delayed(const Duration(milliseconds: 1200));
+
+    if (widget.skipIntro) {
+      _animCtrl.value = 1.0; // ข้าม animation แนะนำตัว
+    } else {
+      await Future.delayed(const Duration(milliseconds: 1200));
+    }
 
     if (!mounted) return;
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(
-        transitionDuration: const Duration(milliseconds: 400),
+        transitionDuration: widget.skipIntro
+            ? Duration.zero
+            : const Duration(milliseconds: 400),
         pageBuilder: (_, __, ___) =>
             loggedIn ? const MainNavigation() : const OnboardingScreen(),
         transitionsBuilder: (_, anim, __, child) =>
@@ -61,7 +76,7 @@ class _SplashScreenState extends State<SplashScreen>
 
     return Scaffold(
       body: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: AppColors.darkGradient,
             begin: Alignment.topCenter,
@@ -81,7 +96,7 @@ class _SplashScreenState extends State<SplashScreen>
                     height: iconSize,
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(iconSize * 0.32),
-                      gradient: const LinearGradient(
+                      gradient: LinearGradient(
                         colors: AppColors.primaryGradient,
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,

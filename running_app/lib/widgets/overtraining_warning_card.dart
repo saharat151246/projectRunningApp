@@ -80,7 +80,7 @@ class OvertrainingWarningCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 12),
-                const Expanded(
+                Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -105,7 +105,7 @@ class OvertrainingWarningCard extends StatelessWidget {
                 ),
                 if (onDismiss != null)
                   IconButton(
-                    icon: const Icon(Icons.close_rounded,
+                    icon: Icon(Icons.close_rounded,
                         size: 18, color: AppColors.textSecondary),
                     onPressed: onDismiss,
                     padding: EdgeInsets.zero,

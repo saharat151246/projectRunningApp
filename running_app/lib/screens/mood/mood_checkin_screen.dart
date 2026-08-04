@@ -63,11 +63,11 @@ class _MoodCheckinScreenState extends State<MoodCheckinScreen> {
                 alignment: Alignment.centerRight,
                 child: TextButton(
                   onPressed: _saving ? null : _skip,
-                  child: const Text('ข้าม', style: TextStyle(color: AppColors.textSecondary)),
+                  child: Text('ข้าม', style: TextStyle(color: AppColors.textSecondary)),
                 ),
               ),
               const SizedBox(height: 8),
-              const Text(
+              Text(
                 'วันนี้รู้สึกยังไงบ้าง? 💭',
                 style: TextStyle(
                   fontSize: 24,
@@ -76,7 +76,7 @@ class _MoodCheckinScreenState extends State<MoodCheckinScreen> {
                 ),
               ),
               const SizedBox(height: 6),
-              const Text(
+              Text(
                 'ข้อมูลนี้จะถูกเก็บไว้ให้ AI Coach ใช้ประเมินคำแนะนำให้แม่นยำขึ้น',
                 style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
               ),
@@ -136,15 +136,15 @@ class _MoodCheckinScreenState extends State<MoodCheckinScreen> {
                   contentPadding: const EdgeInsets.all(14),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(14),
-                    borderSide: const BorderSide(color: AppColors.divider),
+                    borderSide: BorderSide(color: AppColors.divider),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(14),
-                    borderSide: const BorderSide(color: AppColors.divider),
+                    borderSide: BorderSide(color: AppColors.divider),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(14),
-                    borderSide: const BorderSide(color: AppColors.primary, width: 1.8),
+                    borderSide: BorderSide(color: AppColors.primary, width: 1.8),
                   ),
                 ),
               ),

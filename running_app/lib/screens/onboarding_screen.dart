@@ -62,7 +62,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 child: TextButton(
                   onPressed: _goToLogin,
-                  child: const Text(
+                  child: Text(
                     'ข้าม',
                     style: TextStyle(
                       color: AppColors.textSecondary,

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../theme/app_theme.dart';
 import '../../services/auth_service.dart';
+import '../../services/theme_controller.dart';
 import '../onboarding_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -75,7 +76,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Row(
+        title: Row(
           children: [
             Icon(Icons.edit_note_rounded, color: AppColors.primary),
             SizedBox(width: 8),
@@ -166,7 +167,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Row(
+        title: Row(
           children: [
             Icon(Icons.flag_rounded, color: AppColors.primary),
             SizedBox(width: 8),
@@ -176,7 +177,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text(
+            Text(
               'ตั้งเป้าหมายประจำสัปดาห์เพื่อท้าทายตัวเองและรับแต้มสะสมพิเศษ',
               style: TextStyle(fontSize: 12.5, color: AppColors.textSecondary),
             ),
@@ -228,7 +229,66 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  // --- 3. การแจ้งเตือน ---
+  // --- โหมดการแสดงผล (สว่าง / มืด / ตามระบบ) ---
+  void _showDisplayModeSettings() {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setSheetState) {
+          Widget option(ThemeMode mode, String label, String subtitle, IconData icon) {
+            final selected = ThemeController.instance.mode == mode;
+            return ListTile(
+              onTap: () async {
+                await ThemeController.instance.setMode(mode);
+                setSheetState(() {});
+              },
+              leading: Icon(icon, color: selected ? AppColors.primary : AppColors.textSecondary),
+              title: Text(label, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
+              subtitle: Text(subtitle, style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+              trailing: selected
+                  ? Icon(Icons.check_circle_rounded, color: AppColors.primary)
+                  : Icon(Icons.circle_outlined, color: AppColors.divider),
+            );
+          }
+
+          return Padding(
+            padding: const EdgeInsets.fromLTRB(12, 20, 12, 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: AppColors.divider,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  child: Text('โหมดการแสดงผล 🌗',
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
+                ),
+                const SizedBox(height: 12),
+                option(ThemeMode.system, 'ตามระบบ', 'ใช้โหมดเดียวกับที่ตั้งไว้ในเครื่อง', Icons.brightness_auto_rounded),
+                option(ThemeMode.light, 'สว่าง', 'พื้นหลังสว่าง โทนชมพูมินิมอล', Icons.light_mode_rounded),
+                option(ThemeMode.dark, 'มืด', 'พื้นหลังเข้ม ถนอมสายตาตอนกลางคืน', Icons.dark_mode_rounded),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+
   void _showNotificationSettings() {
     showModalBottomSheet(
       context: context,
@@ -256,7 +316,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               const Text('ตั้งค่าการแจ้งเตือน 🔔',
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               const SizedBox(height: 6),
-              const Text('จัดการการแจ้งเตือนและเตือนซ้อมวิ่งเพื่อรักษาวินัย',
+              Text('จัดการการแจ้งเตือนและเตือนซ้อมวิ่งเพื่อรักษาวินัย',
                   style: TextStyle(fontSize: 12.5, color: AppColors.textSecondary)),
               const SizedBox(height: 16),
               SwitchListTile(
@@ -307,14 +367,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Row(
+        title: Row(
           children: [
             Icon(Icons.privacy_tip_outlined, color: AppColors.primary),
             SizedBox(width: 8),
             Text('ความเป็นส่วนตัว 🛡️', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
           ],
         ),
-        content: const SingleChildScrollView(
+        content: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -369,7 +429,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             const SizedBox(height: 16),
             Expanded(
               child: ListView(
-                children: const [
+                children: [
                   ExpansionTile(
                     leading: Icon(Icons.gps_fixed_rounded, color: AppColors.primary),
                     title: Text('📍 การบันทึก GPS ไม่ตรงทำอย่างไร?', style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600)),
@@ -509,7 +569,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     Container(
                       width: 64,
                       height: 64,
-                      decoration: const BoxDecoration(
+                      decoration: BoxDecoration(
                         gradient: LinearGradient(
                           colors: AppColors.primaryGradient,
                           begin: Alignment.topLeft,
@@ -529,12 +589,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               Text(name,
                                   style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 17)),
                               const SizedBox(width: 6),
-                              const Icon(Icons.edit_outlined, size: 16, color: AppColors.primary),
+                              Icon(Icons.edit_outlined, size: 16, color: AppColors.primary),
                             ],
                           ),
                           const SizedBox(height: 4),
                           Text(email,
-                              style: const TextStyle(color: AppColors.textSecondary, fontSize: 13, fontWeight: FontWeight.w500)),
+                              style: TextStyle(color: AppColors.textSecondary, fontSize: 13, fontWeight: FontWeight.w500)),
                           const SizedBox(height: 6),
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
@@ -544,7 +604,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             ),
                             child: Text(
                               provider == 'google' ? 'เข้าสู่ระบบด้วย Google' : 'เข้าสู่ระบบด้วยอีเมล',
-                              style: const TextStyle(
+                              style: TextStyle(
                                   color: AppColors.primary, fontSize: 11, fontWeight: FontWeight.w700),
                             ),
                           ),
@@ -558,7 +618,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
             const SizedBox(height: 20),
             if (_loading)
-              const Center(child: CircularProgressIndicator(color: AppColors.primary))
+              Center(child: CircularProgressIndicator(color: AppColors.primary))
             else
               Row(
                 children: [
@@ -608,8 +668,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
 
             const SizedBox(height: 24),
-            const Text('ทั่วไป', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+            Text('ทั่วไป', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: AppColors.textPrimary)),
             const SizedBox(height: 10),
+            _MenuTile(
+              icon: Icons.dark_mode_outlined,
+              label: 'โหมดการแสดงผล',
+              onTap: _showDisplayModeSettings,
+            ),
             _MenuTile(
               icon: Icons.privacy_tip_outlined,
               label: 'ความเป็นส่วนตัว',
@@ -666,7 +731,7 @@ class _MiniStat extends StatelessWidget {
           children: [
             Text(value, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14.5)),
             const SizedBox(height: 2),
-            Text(label, style: const TextStyle(fontSize: 11.5, color: AppColors.textSecondary, fontWeight: FontWeight.w600)),
+            Text(label, style: TextStyle(fontSize: 11.5, color: AppColors.textSecondary, fontWeight: FontWeight.w600)),
           ],
         ),
       ),

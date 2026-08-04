@@ -93,31 +93,33 @@ ${routeUrl.isEmpty ? '' : '\nดูเส้นทาง: $routeUrl\n'}
 #RunMate #Running''';
   }
 
+  String _shareDurationLabel(int seconds) {
+    final m = seconds ~/ 60;
+    final s = seconds % 60;
+    return '${m}m ${s.toString().padLeft(2, '0')}s';
+  }
+
+  String _sharePaceLabel(double? minPerKm) {
+    if (minPerKm == null || minPerKm <= 0) return '--:--';
+    final m = minPerKm.floor();
+    final s = ((minPerKm - m) * 60).round();
+    return '$m:${s.toString().padLeft(2, '0')} /km';
+  }
+
   Future<Uint8List> _buildShareCard(RunDetail run) async {
     const width = 1080.0;
     const height = 1350.0;
-    const mapLeft = 72.0;
-    const mapTop = 190.0;
-    const mapWidth = 936.0;
-    const mapHeight = 520.0;
     final recorder = ui.PictureRecorder();
     final canvas = Canvas(recorder);
 
+    // พื้นหลังดำล้วน มินิมอล เน้นตัวเลข (สไตล์ Strava-like share card)
     canvas.drawRect(
       const Rect.fromLTWH(0, 0, width, height),
-      Paint()..color = const Color(0xFF10251D),
-    );
-    canvas.drawRect(
-      const Rect.fromLTWH(0, 0, width, 150),
-      Paint()..shader = ui.Gradient.linear(
-        const Offset(0, 0),
-        const Offset(width, 150),
-        AppColors.primaryGradient,
-      ),
+      Paint()..color = Colors.black,
     );
 
-    void text(String value, Offset offset, double size, Color color,
-        {FontWeight weight = FontWeight.w400, double maxWidth = width}) {
+    void centeredText(String value, double top, double size, Color color,
+        {FontWeight weight = FontWeight.w400, double letterSpacing = 0}) {
       final painter = TextPainter(
         text: TextSpan(
           text: value,
@@ -125,37 +127,37 @@ ${routeUrl.isEmpty ? '' : '\nดูเส้นทาง: $routeUrl\n'}
             color: color,
             fontSize: size,
             fontWeight: weight,
+            letterSpacing: letterSpacing,
             fontFamily: 'sans-serif',
           ),
         ),
         textDirection: TextDirection.ltr,
-        maxLines: 2,
-        ellipsis: '…',
-      )..layout(maxWidth: maxWidth);
-      painter.paint(canvas, offset);
+        textAlign: TextAlign.center,
+      )..layout(maxWidth: width);
+      painter.paint(canvas, Offset(0, top));
     }
 
-    text('RUNMATE', const Offset(72, 40), 38, Colors.white,
-        weight: FontWeight.w800);
-    text('RUN SUMMARY', const Offset(74, 91), 17, Colors.white70,
-        weight: FontWeight.w600);
+    // --- สถิติหลัก 3 บรรทัด: Distance / Pace / Time (label เล็ก + ตัวเลขใหญ่) ---
+    final stats = [
+      ('Distance', '${run.distanceKm.toStringAsFixed(2)} km'),
+      ('Pace', _sharePaceLabel(run.avgPace)),
+      ('Time', _shareDurationLabel(run.durationSec)),
+    ];
 
-    final mapRect = RRect.fromRectAndRadius(
-      const Rect.fromLTWH(mapLeft, mapTop, mapWidth, mapHeight),
-      const Radius.circular(32),
-    );
-    canvas.drawRRect(mapRect, Paint()..color = const Color(0xFF1D3A2D));
-    canvas.save();
-    canvas.clipRRect(mapRect);
-    final gridPaint = Paint()
-      ..color = Colors.white.withValues(alpha: .07)
-      ..strokeWidth = 2;
-    for (var x = mapLeft; x <= mapLeft + mapWidth; x += 104) {
-      canvas.drawLine(Offset(x, mapTop), Offset(x, mapTop + mapHeight), gridPaint);
+    var cursorY = 108.0;
+    for (final stat in stats) {
+      centeredText(stat.$1, cursorY, 30, Colors.white70,
+          weight: FontWeight.w600, letterSpacing: 0.5);
+      cursorY += 46;
+      centeredText(stat.$2, cursorY, 82, Colors.white, weight: FontWeight.w800);
+      cursorY += 100;
     }
-    for (var y = mapTop; y <= mapTop + mapHeight; y += 104) {
-      canvas.drawLine(Offset(mapLeft, y), Offset(mapLeft + mapWidth, y), gridPaint);
-    }
+
+    // --- เส้นทางการวิ่ง วาดลอยตัวบนพื้นดำ ไม่มีกรอบแผนที่/กริด ---
+    const routeTop = 650.0;
+    const routeHeight = 380.0;
+    const routeInset = 90.0;
+    final routeBox = Rect.fromLTWH(routeInset, routeTop, width - routeInset * 2, routeHeight);
 
     if (run.route.length > 1) {
       final lats = run.route.map((point) => point.latitude);
@@ -166,62 +168,75 @@ ${routeUrl.isEmpty ? '' : '\nดูเส้นทาง: $routeUrl\n'}
       final maxLng = lngs.reduce((a, b) => a > b ? a : b);
       final latRange = (maxLat - minLat).abs() < 0.00001 ? 0.00001 : maxLat - minLat;
       final lngRange = (maxLng - minLng).abs() < 0.00001 ? 0.00001 : maxLng - minLng;
-      const inset = 58.0;
+
+      // สเกลแบบรักษาสัดส่วน (uniform scale) ไม่ยืดเส้นทางให้ผิดรูป
+      final scale = (routeBox.width / lngRange < routeBox.height / latRange)
+          ? routeBox.width / lngRange
+          : routeBox.height / latRange;
+      final routeW = lngRange * scale;
+      final routeH = latRange * scale;
+      final offsetX = routeBox.left + (routeBox.width - routeW) / 2;
+      final offsetY = routeBox.top + (routeBox.height - routeH) / 2;
+
       Offset project(LatLng point) => Offset(
-            mapLeft + inset + ((point.longitude - minLng) / lngRange) * (mapWidth - inset * 2),
-            mapTop + inset + ((maxLat - point.latitude) / latRange) * (mapHeight - inset * 2),
+            offsetX + (point.longitude - minLng) * scale,
+            offsetY + (maxLat - point.latitude) * scale,
           );
+
       final routePath = ui.Path()
         ..moveTo(project(run.route.first).dx, project(run.route.first).dy);
       for (final point in run.route.skip(1)) {
         final offset = project(point);
         routePath.lineTo(offset.dx, offset.dy);
       }
-      canvas.drawPath(routePath, Paint()
-        ..color = Colors.white.withValues(alpha: .3)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 23
-        ..strokeCap = StrokeCap.round
-        ..strokeJoin = StrokeJoin.round);
-      canvas.drawPath(routePath, Paint()
-        ..color = AppColors.accent
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 12
-        ..strokeCap = StrokeCap.round
-        ..strokeJoin = StrokeJoin.round);
-      for (final marker in [project(run.route.first), project(run.route.last)]) {
-        canvas.drawCircle(marker, 18, Paint()..color = Colors.white);
-        canvas.drawCircle(marker, 11, Paint()..color = AppColors.primary);
-      }
+      canvas.drawPath(
+        routePath,
+        Paint()
+          ..color = AppColors.primary
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 14
+          ..strokeCap = StrokeCap.round
+          ..strokeJoin = StrokeJoin.round,
+      );
+      // จุดสิ้นสุดเส้นทาง
+      canvas.drawCircle(project(run.route.last), 10, Paint()..color = AppColors.primary);
     } else {
-      text('NO GPS ROUTE RECORDED', const Offset(270, 430), 22, Colors.white54,
-          weight: FontWeight.w700);
+      centeredText('NO GPS ROUTE RECORDED', routeTop + routeHeight / 2 - 14, 22,
+          Colors.white38, weight: FontWeight.w700, letterSpacing: 0.5);
     }
-    canvas.restore();
 
-    text(run.distanceKm.toStringAsFixed(2), const Offset(72, 782), 96, Colors.white,
-        weight: FontWeight.w800);
-    text('KM', const Offset(415, 842), 28, AppColors.accent, weight: FontWeight.w800);
-    text('YOUR DISTANCE', const Offset(74, 900), 18, Colors.white60,
-        weight: FontWeight.w700);
-
-    final stats = [
-      ('TIME', _formatDuration(run.durationSec)),
-      ('PACE', _formatPace(run.avgPace)),
-      ('DATE', _formatDate(run.startTime)),
-    ];
-    for (var i = 0; i < stats.length; i++) {
-      final top = 980.0 + (i * 105);
-      text(stats[i].$1, Offset(74, top), 18, Colors.white60, weight: FontWeight.w700);
-      text(stats[i].$2, Offset(290, top - 8), 28, Colors.white, weight: FontWeight.w700,
-          maxWidth: 700);
-      if (i < stats.length - 1) {
-        canvas.drawLine(Offset(72, top + 58), Offset(1008, top + 58),
-            Paint()..color = Colors.white.withValues(alpha: .12));
-      }
-    }
-    text('#RunMate  #Running', const Offset(72, 1280), 19, AppColors.accent,
-        weight: FontWeight.w700);
+    // --- โลโก้/ชื่อแอปด้านล่าง ---
+    const brandIconSize = 46.0;
+    final brandIconRect = Rect.fromLTWH(
+      (width - brandIconSize) / 2 - 118,
+      1150,
+      brandIconSize,
+      brandIconSize,
+    );
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(brandIconRect, const Radius.circular(14)),
+      Paint()
+        ..shader = ui.Gradient.linear(
+          brandIconRect.topLeft,
+          brandIconRect.bottomRight,
+          AppColors.primaryGradient,
+        ),
+    );
+    final iconPainter = TextPainter(
+      text: const TextSpan(
+        text: '🏃',
+        style: TextStyle(fontSize: 26),
+      ),
+      textDirection: TextDirection.ltr,
+    )..layout();
+    iconPainter.paint(
+      canvas,
+      Offset(
+        brandIconRect.left + (brandIconSize - iconPainter.width) / 2,
+        brandIconRect.top + (brandIconSize - iconPainter.height) / 2,
+      ),
+    );
+    centeredText('RunMate', 1156, 40, Colors.white, weight: FontWeight.w800, letterSpacing: 0.5);
 
     final image = await recorder.endRecording().toImage(width.toInt(), height.toInt());
     final bytes = await image.toByteData(format: ui.ImageByteFormat.png);
@@ -294,7 +309,7 @@ ${routeUrl.isEmpty ? '' : '\nดูเส้นทาง: $routeUrl\n'}
         ],
       ),
       body: _loading
-          ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
+          ? Center(child: CircularProgressIndicator(color: AppColors.primary))
           : _notFound
               ? _buildNotFound()
               : _buildContent(_detail!),
@@ -306,9 +321,9 @@ ${routeUrl.isEmpty ? '' : '\nดูเส้นทาง: $routeUrl\n'}
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.error_outline_rounded, color: AppColors.textSecondary, size: 40),
+          Icon(Icons.error_outline_rounded, color: AppColors.textSecondary, size: 40),
           const SizedBox(height: 12),
-          const Text('ไม่พบข้อมูลการวิ่งนี้',
+          Text('ไม่พบข้อมูลการวิ่งนี้',
               style: TextStyle(color: AppColors.textSecondary)),
           const SizedBox(height: 16),
           TextButton(onPressed: _load, child: const Text('ลองอีกครั้ง')),
@@ -397,7 +412,7 @@ ${routeUrl.isEmpty ? '' : '\nดูเส้นทาง: $routeUrl\n'}
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(_formatDate(run.startTime),
-                  style: const TextStyle(
+                  style: TextStyle(
                       fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
               const SizedBox(height: 20),
 
@@ -480,7 +495,7 @@ ${routeUrl.isEmpty ? '' : '\nดูเส้นทาง: $routeUrl\n'}
                         const SizedBox(height: 10),
                         Text(
                           run.note!,
-                          style: const TextStyle(
+                          style: TextStyle(
                               fontSize: 12.5, color: AppColors.textSecondary, height: 1.5),
                         ),
                       ],
@@ -502,7 +517,7 @@ ${routeUrl.isEmpty ? '' : '\nดูเส้นทาง: $routeUrl\n'}
               if (hasRoute) ...[
                 const SizedBox(height: 24),
                 Text('บันทึกพิกัดทั้งหมด ${run.route.length} จุด',
-                    style: const TextStyle(fontSize: 11.5, color: AppColors.textSecondary)),
+                    style: TextStyle(fontSize: 11.5, color: AppColors.textSecondary)),
               ],
             ],
           ),
@@ -549,16 +564,16 @@ class _StatBlock extends StatelessWidget {
             textBaseline: TextBaseline.alphabetic,
             children: [
               Text(value,
-                  style: const TextStyle(
+                  style: TextStyle(
                       fontSize: 18, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
               if (unit.isNotEmpty) ...[
                 const SizedBox(width: 3),
-                Text(unit, style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+                Text(unit, style: TextStyle(fontSize: 11, color: AppColors.textSecondary)),
               ],
             ],
           ),
           const SizedBox(height: 2),
-          Text(label, style: const TextStyle(fontSize: 11.5, color: AppColors.textSecondary)),
+          Text(label, style: TextStyle(fontSize: 11.5, color: AppColors.textSecondary)),
         ],
       ),
     );

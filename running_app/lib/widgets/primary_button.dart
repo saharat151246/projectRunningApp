@@ -21,7 +21,7 @@ class PrimaryButton extends StatelessWidget {
       height: 52,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
-        gradient: const LinearGradient(
+        gradient: LinearGradient(
           colors: AppColors.primaryGradient,
           begin: Alignment.centerLeft,
           end: Alignment.centerRight,
@@ -99,7 +99,7 @@ class SocialLoginButton extends StatelessWidget {
             const SizedBox(width: 10),
             Text(
               label,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.w600,
                 color: AppColors.textPrimary,

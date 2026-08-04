@@ -340,7 +340,7 @@ class _TrackingScreenState extends State<TrackingScreen> {
               ...achievementLines.map((line) => Padding(
                     padding: const EdgeInsets.only(bottom: 4),
                     child: Text(line,
-                        style: const TextStyle(fontWeight: FontWeight.w700, color: AppColors.gold)),
+                        style: TextStyle(fontWeight: FontWeight.w700, color: AppColors.gold)),
                   )),
             ],
           ],
@@ -405,7 +405,7 @@ class _TrackingScreenState extends State<TrackingScreen> {
               child: Stack(
                 children: [
                   if (_checkingPermission)
-                    const Center(
+                    Center(
                       child: CircularProgressIndicator(color: AppColors.accent),
                     )
                   else if (_errorMessage != null)
@@ -427,7 +427,7 @@ class _TrackingScreenState extends State<TrackingScreen> {
                             const SizedBox(height: 16),
                             TextButton(
                               onPressed: _initLocation,
-                              child: const Text('ลองอีกครั้ง',
+                              child: Text('ลองอีกครั้ง',
                                   style: TextStyle(color: AppColors.accent)),
                             ),
                           ],
@@ -503,7 +503,7 @@ class _TrackingScreenState extends State<TrackingScreen> {
                           color: AppColors.accent.withValues(alpha: 0.2),
                           borderRadius: BorderRadius.circular(20),
                         ),
-                        child: const Row(
+                        child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Icon(Icons.circle, size: 8, color: AppColors.accent),
@@ -522,7 +522,7 @@ class _TrackingScreenState extends State<TrackingScreen> {
               child: Container(
                 width: double.infinity,
                 padding: const EdgeInsets.fromLTRB(24, 28, 24, 20),
-                decoration: const BoxDecoration(
+                decoration: BoxDecoration(
                   color: AppColors.secondary,
                 ),
                 child: Column(
