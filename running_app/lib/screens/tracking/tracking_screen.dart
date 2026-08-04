@@ -4,7 +4,9 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:geolocator/geolocator.dart';
 import '../../theme/app_theme.dart';
+import '../../config/map_config.dart';
 import '../../widgets/primary_button.dart';
+import '../../widgets/map_attribution.dart';
 import '../../services/stats_service.dart';
 import '../../services/run_service.dart';
 import '../../services/coach_service.dart';
@@ -445,8 +447,7 @@ class _TrackingScreenState extends State<TrackingScreen> {
                       ),
                       children: [
                         TileLayer(
-                          urlTemplate:
-                              'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                          urlTemplate: MapConfig.tileUrlTemplate,
                           userAgentPackageName: 'com.example.running_app',
                         ),
                         if (_routePoints.length > 1)
@@ -514,6 +515,11 @@ class _TrackingScreenState extends State<TrackingScreen> {
                         ),
                       ),
                     ),
+                  if (!_checkingPermission && _errorMessage == null) ...[
+                    const Positioned(right: 8, bottom: 8, child: MapAttribution()),
+                    if (!MapConfig.hasValidToken)
+                      const Positioned(left: 0, right: 0, bottom: 0, child: MapTokenWarning()),
+                  ],
                 ],
               ),
             ),
