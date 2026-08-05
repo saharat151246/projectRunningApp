@@ -41,6 +41,13 @@ class _TrackingScreenState extends State<TrackingScreen> {
   final List<LatLng> _routePoints = [];
   final List<DateTime> _routeTimestamps = []; // เวลาที่บันทึกแต่ละจุด คู่กับ _routePoints
 
+  // ค่าที่เปลี่ยนบ่อยมาก (ทุกวินาที/ทุกครั้งที่ GPS ขยับ) แยกออกมาเป็น ValueNotifier
+  // แทนการ setState() ทั้งจอ เพื่อให้เฉพาะตัวเลข/เส้นทางบนแผนที่อัปเดต ไม่ต้อง build()
+  // ปุ่มกด, แผนที่ทั้งก้อน, ฯลฯ ใหม่ทุกวินาที - ช่วยให้จอลื่นขึ้นมากตอนกำลังวิ่งจริง
+  final ValueNotifier<int> _secondsNotifier = ValueNotifier(0);
+  final ValueNotifier<double> _distanceNotifier = ValueNotifier(0);
+  final ValueNotifier<List<LatLng>> _routeNotifier = ValueNotifier(const []);
+
   // สถานะ permission/GPS
   bool _checkingPermission = true;
   String? _errorMessage;
@@ -110,6 +117,7 @@ class _TrackingScreenState extends State<TrackingScreen> {
         _routePoints.add(LatLng(pos.latitude, pos.longitude));
         _routeTimestamps.add(DateTime.now());
       });
+      _routeNotifier.value = List<LatLng>.from(_routePoints);
     } catch (e) {
       setState(() {
         _checkingPermission = false;
@@ -203,8 +211,10 @@ class _TrackingScreenState extends State<TrackingScreen> {
       _isPaused = false;
     });
 
+    // ติ๊กทุกวินาที: อัปเดตแค่ ValueNotifier ไม่ setState() ทั้งจอ
     _secondTimer = Timer.periodic(const Duration(seconds: 1), (_) {
-      setState(() => _seconds++);
+      _seconds++;
+      _secondsNotifier.value = _seconds;
     });
 
     const settings = LocationSettings(
@@ -231,11 +241,14 @@ class _TrackingScreenState extends State<TrackingScreen> {
       }
     }
 
-    setState(() {
-      _lastPosition = position;
-      _routePoints.add(newPoint);
-      _routeTimestamps.add(DateTime.now());
-    });
+    _lastPosition = position;
+    _routePoints.add(newPoint);
+    _routeTimestamps.add(DateTime.now());
+
+    // อัปเดตเฉพาะ ValueNotifier - ไม่ setState() ทั้งจอทุกครั้งที่ GPS ขยับ
+    // (เดิมเรียก setState() ตรงนี้ ทำให้ทั้งแผนที่/ปุ่ม/ข้อความ rebuild ใหม่หมดทุกจุด GPS)
+    _routeNotifier.value = List<LatLng>.from(_routePoints);
+    _distanceNotifier.value = _totalDistanceMeters;
 
     _mapController.move(newPoint, _mapController.camera.zoom);
   }
@@ -245,7 +258,8 @@ class _TrackingScreenState extends State<TrackingScreen> {
       // Resume existing stream + timer instead of creating new ones
       _positionStream?.resume();
       _secondTimer = Timer.periodic(const Duration(seconds: 1), (_) {
-        setState(() => _seconds++);
+        _seconds++;
+        _secondsNotifier.value = _seconds;
       });
       setState(() => _isPaused = false);
     } else {
@@ -388,15 +402,14 @@ class _TrackingScreenState extends State<TrackingScreen> {
     _secondTimer?.cancel();
     _positionStream?.cancel();
     _mapController.dispose();
+    _secondsNotifier.dispose();
+    _distanceNotifier.dispose();
+    _routeNotifier.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final distanceKm = _totalDistanceMeters / 1000;
-    final paceMinPerKm = distanceKm > 0.01 ? (_seconds / 60) / distanceKm : 0.0;
-    final calories = (distanceKm * 62).toStringAsFixed(0);
-
     return Scaffold(
       backgroundColor: AppColors.secondary,
       body: SafeArea(
@@ -450,33 +463,44 @@ class _TrackingScreenState extends State<TrackingScreen> {
                           urlTemplate: MapConfig.tileUrlTemplate,
                           userAgentPackageName: 'com.example.running_app',
                         ),
-                        if (_routePoints.length > 1)
-                          PolylineLayer(
-                            polylines: [
-                              Polyline(
-                                points: _routePoints,
-                                color: AppColors.primary,
-                                strokeWidth: 4,
-                              ),
-                            ],
-                          ),
-                        if (_routePoints.isNotEmpty)
-                          MarkerLayer(
-                            markers: [
-                              Marker(
-                                point: _routePoints.last,
-                                width: 22,
-                                height: 22,
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    color: AppColors.primary,
-                                    shape: BoxShape.circle,
-                                    border: Border.all(color: Colors.white, width: 3),
+                        // เส้นทาง/หมุดล่าสุด แยกฟัง _routeNotifier ต่างหาก
+                        // เพื่อไม่ให้ TileLayer/แผนที่ทั้งก้อน rebuild ทุกครั้งที่ GPS ขยับ
+                        ValueListenableBuilder<List<LatLng>>(
+                          valueListenable: _routeNotifier,
+                          builder: (context, points, _) {
+                            return Stack(
+                              children: [
+                                if (points.length > 1)
+                                  PolylineLayer(
+                                    polylines: [
+                                      Polyline(
+                                        points: points,
+                                        color: AppColors.primary,
+                                        strokeWidth: 4,
+                                      ),
+                                    ],
                                   ),
-                                ),
-                              ),
-                            ],
-                          ),
+                                if (points.isNotEmpty)
+                                  MarkerLayer(
+                                    markers: [
+                                      Marker(
+                                        point: points.last,
+                                        width: 22,
+                                        height: 22,
+                                        child: Container(
+                                          decoration: BoxDecoration(
+                                            color: AppColors.primary,
+                                            shape: BoxShape.circle,
+                                            border: Border.all(color: Colors.white, width: 3),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                              ],
+                            );
+                          },
+                        ),
                       ],
                     ),
                   Positioned(
@@ -533,26 +557,46 @@ class _TrackingScreenState extends State<TrackingScreen> {
                 ),
                 child: Column(
                   children: [
-                    Text(
-                      _formatTime(_seconds),
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 56,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 1,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text('เวลา',
-                        style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 12)),
-                    const SizedBox(height: 28),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceAround,
-                      children: [
-                        _metric(distanceKm.toStringAsFixed(2), 'กม.', 'ระยะทาง'),
-                        _metric(_formatPace(paceMinPerKm), '/กม.', 'เพซ'),
-                        _metric(calories, 'kcal', 'แคลอรี่'),
-                      ],
+                    // เวลา/ระยะทาง/เพซ/แคลอรี่: ฟัง ValueNotifier โดยตรง แยกจาก build() หลัก
+                    // ทำให้ตัวเลขอัปเดตทุกวินาที/ทุกจุด GPS แบบลื่นๆ โดยไม่ต้อง rebuild ทั้งจอ
+                    ValueListenableBuilder<int>(
+                      valueListenable: _secondsNotifier,
+                      builder: (context, seconds, _) {
+                        return ValueListenableBuilder<double>(
+                          valueListenable: _distanceNotifier,
+                          builder: (context, distanceMeters, __) {
+                            final distanceKm = distanceMeters / 1000;
+                            final paceMinPerKm =
+                                distanceKm > 0.01 ? (seconds / 60) / distanceKm : 0.0;
+                            final calories = (distanceKm * 62).toStringAsFixed(0);
+                            return Column(
+                              children: [
+                                Text(
+                                  _formatTime(seconds),
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 56,
+                                    fontWeight: FontWeight.w800,
+                                    letterSpacing: 1,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text('เวลา',
+                                    style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 12)),
+                                const SizedBox(height: 28),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                                  children: [
+                                    _metric(distanceKm.toStringAsFixed(2), 'กม.', 'ระยะทาง'),
+                                    _metric(_formatPace(paceMinPerKm), '/กม.', 'เพซ'),
+                                    _metric(calories, 'kcal', 'แคลอรี่'),
+                                  ],
+                                ),
+                              ],
+                            );
+                          },
+                        );
+                      },
                     ),
                     const Spacer(),
                     if (_checkingPermission || _errorMessage != null)

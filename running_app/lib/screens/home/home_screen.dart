@@ -314,11 +314,14 @@ class _HomeScreenState extends State<HomeScreen> {
                       children: [
                         Row(
                           children: [
-                            const Text('คำแนะนำฝึกซ้อมประจำวัน',
-                                style: TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w800,
-                                    fontSize: 15)),
+                            const Flexible(
+                              child: Text('คำแนะนำฝึกซ้อมประจำวัน',
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w800,
+                                      fontSize: 15)),
+                            ),
                             if (!_coachLoading && _coach?.source == 'gemini') ...[
                               const SizedBox(width: 6),
                               Container(
