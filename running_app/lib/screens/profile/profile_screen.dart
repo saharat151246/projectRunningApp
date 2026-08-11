@@ -4,6 +4,7 @@ import '../../theme/app_theme.dart';
 import '../../services/auth_service.dart';
 import '../../services/theme_controller.dart';
 import '../onboarding_screen.dart';
+import '../../widgets/user_avatar.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -71,89 +72,153 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final weightCtrl = TextEditingController(text: _weight != null ? '$_weight' : '');
     final heightCtrl = TextEditingController(text: _height != null ? '$_height' : '');
     final ageCtrl = TextEditingController(text: _age != null ? '$_age' : '');
+    final avatarUrlCtrl = TextEditingController(text: (user?['avatar_url'] as String?) ?? '');
+
+    String selectedAvatar = (user?['avatar_url'] as String?) ?? '';
+    final presetEmojis = ['🏃', '🏃‍♀️', '⚡', '🚀', '🥇', '🦁', '🦊', '💎'];
 
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Row(
-          children: [
-            Icon(Icons.edit_note_rounded, color: AppColors.primary),
-            SizedBox(width: 8),
-            Text('แก้ไขข้อมูลส่วนตัว', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-          ],
-        ),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: Row(
             children: [
-              TextField(
-                controller: nameCtrl,
-                decoration: const InputDecoration(labelText: 'ชื่อ-นามสกุล', prefixIcon: Icon(Icons.person_outline)),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: weightCtrl,
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                decoration: const InputDecoration(labelText: 'น้ำหนัก (กก.)', prefixIcon: Icon(Icons.monitor_weight_outlined)),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: heightCtrl,
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                decoration: const InputDecoration(labelText: 'ส่วนสูง (ซม.)', prefixIcon: Icon(Icons.height_rounded)),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: ageCtrl,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(labelText: 'อายุ (ปี)', prefixIcon: Icon(Icons.cake_outlined)),
-              ),
+              Icon(Icons.edit_note_rounded, color: AppColors.primary),
+              const SizedBox(width: 8),
+              const Text('แก้ไขข้อมูลส่วนตัว', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             ],
           ),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Column(
+                    children: [
+                      UserAvatar(avatarUrl: selectedAvatar, size: 72, iconSize: 36),
+                      const SizedBox(height: 8),
+                      Text('เลือกรูปโปรไฟล์ 🎨', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.textSecondary)),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 12),
+                // Emoji Preset Selector
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  alignment: WrapAlignment.center,
+                  children: presetEmojis.map((emoji) {
+                    final isSelected = selectedAvatar == 'preset:$emoji';
+                    return InkWell(
+                      onTap: () {
+                        setDialogState(() {
+                          selectedAvatar = 'preset:$emoji';
+                          avatarUrlCtrl.text = selectedAvatar;
+                        });
+                      },
+                      borderRadius: BorderRadius.circular(20),
+                      child: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: isSelected ? AppColors.primaryLight : AppColors.background,
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: isSelected ? AppColors.primary : AppColors.divider,
+                            width: isSelected ? 2 : 1,
+                          ),
+                        ),
+                        child: Text(emoji, style: const TextStyle(fontSize: 20)),
+                      ),
+                    );
+                  }).toList(),
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: avatarUrlCtrl,
+                  onChanged: (val) {
+                    setDialogState(() {
+                      selectedAvatar = val.trim();
+                    });
+                  },
+                  decoration: const InputDecoration(
+                    labelText: 'หรือวาง URL รูปภาพ (https://...)',
+                    prefixIcon: Icon(Icons.link_rounded),
+                    isDense: true,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: nameCtrl,
+                  decoration: const InputDecoration(labelText: 'ชื่อ-นามสกุล', prefixIcon: Icon(Icons.person_outline)),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: weightCtrl,
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  decoration: const InputDecoration(labelText: 'น้ำหนัก (กก.)', prefixIcon: Icon(Icons.monitor_weight_outlined)),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: heightCtrl,
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  decoration: const InputDecoration(labelText: 'ส่วนสูง (ซม.)', prefixIcon: Icon(Icons.height_rounded)),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: ageCtrl,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(labelText: 'อายุ (ปี)', prefixIcon: Icon(Icons.cake_outlined)),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('ยกเลิก'),
+            ),
+            FilledButton(
+              onPressed: () async {
+                final newName = nameCtrl.text.trim();
+                final newWeight = double.tryParse(weightCtrl.text.trim());
+                final newHeight = double.tryParse(heightCtrl.text.trim());
+                final newAge = int.tryParse(ageCtrl.text.trim());
+                final newAvatar = selectedAvatar.trim();
+
+                setState(() {
+                  if (newWeight != null && newWeight > 0) _weight = newWeight;
+                  if (newHeight != null && newHeight > 0) _height = newHeight;
+                  if (newAge != null && newAge > 0) _age = newAge;
+                });
+                _saveProfilePrefs();
+
+                Navigator.pop(ctx);
+
+                final result = await AuthService.instance.updateProfile(
+                  name: newName.isNotEmpty ? newName : null,
+                  weight: newWeight,
+                  height: newHeight,
+                  age: newAge,
+                  avatarUrl: newAvatar,
+                );
+
+                if (!mounted) return;
+                if (result.success) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('บันทึกข้อมูลส่วนตัวลงฐานข้อมูลเรียบร้อยแล้ว ✨')),
+                  );
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('บันทึกลงฐานข้อมูลไม่สำเร็จ: ${result.errorMessage}')),
+                  );
+                }
+              },
+              child: const Text('บันทึก'),
+            ),
+          ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('ยกเลิก'),
-          ),
-          FilledButton(
-            onPressed: () async {
-              final newName = nameCtrl.text.trim();
-              final newWeight = double.tryParse(weightCtrl.text.trim());
-              final newHeight = double.tryParse(heightCtrl.text.trim());
-              final newAge = int.tryParse(ageCtrl.text.trim());
-
-              setState(() {
-                if (newWeight != null && newWeight > 0) _weight = newWeight;
-                if (newHeight != null && newHeight > 0) _height = newHeight;
-                if (newAge != null && newAge > 0) _age = newAge;
-              });
-              _saveProfilePrefs();
-
-              Navigator.pop(ctx);
-
-              final result = await AuthService.instance.updateProfile(
-                name: newName.isNotEmpty ? newName : null,
-                weight: newWeight,
-                height: newHeight,
-                age: newAge,
-              );
-
-              if (!mounted) return;
-              if (result.success) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('บันทึกข้อมูลส่วนตัวลงฐานข้อมูลเรียบร้อยแล้ว ✨')),
-                );
-              } else {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('บันทึกลงฐานข้อมูลไม่สำเร็จ: ${result.errorMessage}')),
-                );
-              }
-            },
-            child: const Text('บันทึก'),
-          ),
-        ],
       ),
     );
   }
@@ -567,18 +632,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
                 child: Row(
                   children: [
-                    Container(
-                      width: 64,
-                      height: 64,
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: AppColors.primaryGradient,
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(Icons.person_rounded, color: Colors.white, size: 32),
+                    UserAvatar(
+                      avatarUrl: user?['avatar_url'] as String?,
+                      size: 64,
+                      iconSize: 32,
                     ),
                     const SizedBox(width: 16),
                     Expanded(

@@ -172,6 +172,7 @@ class AuthService extends ChangeNotifier {
     double? weight,
     double? height,
     int? age,
+    String? avatarUrl,
   }) async {
     if (_token == null) {
       return AuthResult(success: false, errorMessage: 'กรุณาเข้าสู่ระบบก่อน');
@@ -189,6 +190,7 @@ class AuthService extends ChangeNotifier {
               if (weight != null) 'weight': weight,
               if (height != null) 'height': height,
               if (age != null) 'age': age,
+              if (avatarUrl != null) 'avatar_url': avatarUrl,
             }),
           )
           .timeout(const Duration(seconds: 12));

@@ -11,6 +11,7 @@ import '../../widgets/daily_plan_card.dart';
 import '../coach/coach_chat_screen.dart';
 import '../coach/coach_insight_screen.dart';
 import '../history/run_detail_screen.dart';
+import '../../widgets/user_avatar.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -108,25 +109,10 @@ class _HomeScreenState extends State<HomeScreen> {
                           color: AppColors.textPrimary)),
                 ],
               ),
-              Container(
-                width: 46,
-                height: 46,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: AppColors.primaryGradient,
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.primary.withValues(alpha: 0.25),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: const Icon(Icons.person_rounded, color: Colors.white, size: 24),
+              UserAvatar(
+                avatarUrl: AuthService.instance.currentUser?['avatar_url'] as String?,
+                size: 46,
+                iconSize: 24,
               ),
             ],
           ),

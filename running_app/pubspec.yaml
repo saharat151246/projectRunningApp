@@ -30,6 +30,7 @@ dependencies:
 
   share_plus: ^12.0.2
   cross_file: ^0.3.4+2
+  image_picker: ^1.1.2           # เลือกรูปจากคลังภาพ
 
 dev_dependencies:
   flutter_test:

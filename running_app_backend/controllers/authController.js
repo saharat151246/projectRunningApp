@@ -174,7 +174,7 @@ exports.me = async (req, res) => {
 // PUT /api/auth/me (ต้องแนบ JWT ผ่าน middleware ก่อน)
 exports.updateProfile = async (req, res) => {
   try {
-    const { name, weight, height, age, gender } = req.body;
+    const { name, weight, height, age, gender, avatar_url } = req.body;
     const user = await User.findById(req.userId);
     if (!user) return res.status(404).json({ message: 'ไม่พบผู้ใช้' });
 
@@ -192,6 +192,9 @@ exports.updateProfile = async (req, res) => {
     }
     if (gender !== undefined && gender !== null) {
       user.gender = gender;
+    }
+    if (avatar_url !== undefined) {
+      user.avatar_url = avatar_url;
     }
 
     await user.save();
