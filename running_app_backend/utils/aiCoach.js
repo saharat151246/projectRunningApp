@@ -79,6 +79,12 @@ function buildCoachContext(runs) {
   const overtrainingRisk = weeklyChangePercent !== null && weeklyChangePercent > 10;
   const inactivityWarning = daysSinceLastRun >= 3;
 
+  // --- วิเคราะห์ recovery factors (ชั่วโมงนอน, ความเครียด, สภาพอากาศ) ---
+  const lastRunWithRecovery = sortedDesc.find((r) => r.sleep_hours != null || r.stress_level || r.weather);
+  const lastSleepHours = lastRunWithRecovery?.sleep_hours ?? null;
+  const lastStressLevel = lastRunWithRecovery?.stress_level ?? null;
+  const lastWeather = lastRunWithRecovery?.weather ?? null;
+
   // --- วิเคราะห์ความรู้สึกหลังวิ่ง (mood check-in) ที่ผู้ใช้บันทึกไว้ ---
   const runsWithMood = sortedDesc.filter((r) => r.mood);
   const lastMood = runsWithMood.length > 0 ? runsWithMood[0].mood : null;
@@ -108,6 +114,9 @@ function buildCoachContext(runs) {
     overtrainingRisk,
     inactivityWarning,
     lastMood,
+    lastSleepHours,
+    lastStressLevel,
+    lastWeather,
     moodCounts,
     fatigueSignal,
   };
@@ -123,7 +132,10 @@ function buildCoachContext(runs) {
 - เสี่ยง overtraining (เพิ่มระยะทางเกิน 10%/สัปดาห์): ${overtrainingRisk ? 'ใช่' : 'ไม่'}
 - ไม่ได้วิ่งเกิน 3 วัน: ${inactivityWarning ? 'ใช่' : 'ไม่'}
 - ความรู้สึกหลังวิ่งครั้งล่าสุด: ${lastMood ? MOOD_LABELS[lastMood] : 'ไม่ได้เช็คอินไว้'}
-- สัญญาณเหนื่อยล้าสะสมจากการเช็คอินความรู้สึก (2 ใน 3 ครั้งล่าสุดรู้สึกเหนื่อย/เหนื่อยมาก): ${fatigueSignal ? 'ใช่' : 'ไม่'}
+- สัญญาณเหนื่อยล้าสะสม (2 ใน 3 ครั้งล่าสุดรู้สึกเหนื่อย/เหนื่อยมาก): ${fatigueSignal ? 'ใช่' : 'ไม่'}
+- ชั่วโมงนอนล่าสุด: ${lastSleepHours ? `${lastSleepHours} ชั่วโมง` : 'ไม่ได้บันทึก'}
+- ระดับความเครียดล่าสุด: ${lastStressLevel ?? 'ไม่ได้บันทึก'}
+- สภาพอากาศล่าสุด: ${lastWeather ?? 'ไม่ได้บันทึก'}
 `.trim();
 
   // ข้อความสำรอง (rule-based ล้วน) เผื่อ Gemini เรียกไม่สำเร็จ
@@ -141,6 +153,9 @@ function buildCoachContext(runs) {
       `จากการเช็คอินความรู้สึกหลังวิ่งล่าสุดหลายครั้ง คุณรู้สึกเหนื่อย/เหนื่อยมากต่อเนื่อง แม้ระยะทางจะยังไม่ได้เพิ่มขึ้นเกินเกณฑ์ ก็ควรฟังร่างกายตัวเองและพิจารณาพักฟื้นเพิ่มเติม`
     );
   }
+  if (lastSleepHours != null && lastSleepHours < 6) {
+    fallbackParts.push(`ชั่วโมงนอนครั้งล่าสุดค่อนข้างน้อย (${lastSleepHours} ชม.) ควรระวังเรื่องการสะสมความเหนื่อยล้า`);
+  }
   if (inactivityWarning) {
     fallbackParts.push(`คุณไม่ได้วิ่งมา ${daysSinceLastRun} วันแล้ว ลองกลับมาวิ่งเบาๆ อีกครั้งเพื่อรักษาความต่อเนื่อง`);
   }
@@ -157,4 +172,98 @@ function buildCoachContext(runs) {
   };
 }
 
-module.exports = { buildCoachContext };
+function buildFallbackDailyPlan(stats) {
+  if (stats.overtrainingRisk || stats.fatigueSignal || (stats.lastSleepHours != null && stats.lastSleepHours < 5)) {
+    return {
+      title: 'วันพักฟื้นร่างกาย (Active Recovery Day)',
+      activityType: 'rest',
+      targetDistanceKm: 0,
+      targetPace: '-',
+      rationale: 'ตรวจพบสัญญาณเหนื่อยล้าสะสมหรือนอนน้อย วันนี้แนะนำให้พักผ่อน ยืดเหยียดกล้ามเนื้อ หรือเดินเบาๆ เพื่อให้ร่างกายซ่อมแซมเต็มที่',
+      tips: 'จิบน้ำเรื่อยๆ และพยายามเข้านอนให้เร็วขึ้นในคืนนี้',
+    };
+  }
+  if (stats.daysSinceLastRun >= 3) {
+    return {
+      title: 'วิ่งฟื้นฟูเบาๆ (Easy Comeback Run)',
+      activityType: 'easy_run',
+      targetDistanceKm: 3.0,
+      targetPace: '6:45 - 7:30',
+      rationale: 'ไม่ได้วิ่งมาหลายวันแล้ว แนะนำให้เริ่มต้นด้วยการวิ่งเหยาะๆ จังหวะสบายๆ เพื่อปรับสภาพร่างกาย',
+      tips: 'ไม่ต้องเร่งความเร็ว เน้นหายใจสบายๆ คุยเป็นประโยคได้',
+    };
+  }
+  return {
+    title: 'วิ่งเพื่อสร้างความคงทน (Aerobic Endurance Run)',
+    activityType: 'easy_run',
+    targetDistanceKm: 5.0,
+    targetPace: '6:15 - 6:45',
+    rationale: 'ร่างกายของคุณอยู่ในสภาพพร้อมซ้อม ซ้อมระยะทางกำลังดีที่โซน 2 เพื่อเพิ่มความแข็งแรงของหัวใจ',
+    tips: 'วอร์มอัพ 5 นาที และคูลดาวน์หลังวิ่งเสร็จ',
+  };
+}
+
+function computeLongTermInsights(runs) {
+  const runsWithPace = runs.filter((r) => r.avg_pace != null && r.avg_pace > 0);
+  
+  // 1. Sleep Impact
+  const goodSleepRuns = runsWithPace.filter((r) => r.sleep_hours != null && r.sleep_hours >= 7);
+  const poorSleepRuns = runsWithPace.filter((r) => r.sleep_hours != null && r.sleep_hours < 6);
+
+  const goodSleepAvgPace = goodSleepRuns.length > 0
+    ? goodSleepRuns.reduce((s, r) => s + r.avg_pace, 0) / goodSleepRuns.length
+    : null;
+  const poorSleepAvgPace = poorSleepRuns.length > 0
+    ? poorSleepRuns.reduce((s, r) => s + r.avg_pace, 0) / poorSleepRuns.length
+    : null;
+
+  let sleepPaceDiffSec = null;
+  if (goodSleepAvgPace && poorSleepAvgPace) {
+    // Pace is in minutes per km. Difference in seconds per km:
+    sleepPaceDiffSec = Math.round((poorSleepAvgPace - goodSleepAvgPace) * 60);
+  }
+
+  // 2. Weather conditions
+  const weatherMap = {};
+  runsWithPace.forEach((r) => {
+    if (r.weather) {
+      if (!weatherMap[r.weather]) weatherMap[r.weather] = { count: 0, totalPace: 0 };
+      weatherMap[r.weather].count += 1;
+      weatherMap[r.weather].totalPace += r.avg_pace;
+    }
+  });
+
+  let bestWeather = null;
+  let bestWeatherPace = Infinity;
+  Object.keys(weatherMap).forEach((w) => {
+    const avg = weatherMap[w].totalPace / weatherMap[w].count;
+    if (avg < bestWeatherPace) {
+      bestWeatherPace = avg;
+      bestWeather = w;
+    }
+  });
+
+  // 3. Stress impact
+  const lowStressRuns = runsWithPace.filter((r) => r.stress_level === 'low');
+  const highStressRuns = runsWithPace.filter((r) => r.stress_level === 'high');
+
+  const lowStressAvgPace = lowStressRuns.length > 0
+    ? lowStressRuns.reduce((s, r) => s + r.avg_pace, 0) / lowStressRuns.length
+    : null;
+  const highStressAvgPace = highStressRuns.length > 0
+    ? highStressRuns.reduce((s, r) => s + r.avg_pace, 0) / highStressRuns.length
+    : null;
+
+  return {
+    totalRuns: runs.length,
+    analyzedRunsCount: runsWithPace.length,
+    goodSleepAvgPace: goodSleepAvgPace ? Math.round(goodSleepAvgPace * 100) / 100 : null,
+    poorSleepAvgPace: poorSleepAvgPace ? Math.round(poorSleepAvgPace * 100) / 100 : null,
+    sleepPaceDiffSec,
+    bestWeather,
+    lowStressAvgPace: lowStressAvgPace ? Math.round(lowStressAvgPace * 100) / 100 : null,
+    highStressAvgPace: highStressAvgPace ? Math.round(highStressAvgPace * 100) / 100 : null,
+  };
+}
+
+module.exports = { buildCoachContext, buildFallbackDailyPlan, computeLongTermInsights };

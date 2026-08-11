@@ -7,7 +7,9 @@ import '../../services/run_service.dart';
 import '../../services/auth_service.dart';
 import '../../services/coach_service.dart';
 import '../../widgets/overtraining_warning_card.dart';
+import '../../widgets/daily_plan_card.dart';
 import '../coach/coach_chat_screen.dart';
+import '../coach/coach_insight_screen.dart';
 import '../history/run_detail_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -23,6 +25,7 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _loading = true;
 
   CoachAdvice? _coach;
+  DailyPlanItem? _dailyPlan;
   bool _coachLoading = true;
 
   @override
@@ -35,9 +38,11 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _loadCoach() async {
     setState(() => _coachLoading = true);
     final advice = await CoachService.instance.fetchAdvice();
+    final plan = await CoachService.instance.fetchDailyPlan();
     if (!mounted) return;
     setState(() {
       _coach = advice;
+      _dailyPlan = plan;
       _coachLoading = false;
     });
   }
@@ -136,6 +141,67 @@ class _HomeScreenState extends State<HomeScreen> {
                 );
               },
             ),
+
+          if (_dailyPlan != null)
+            DailyPlanCard(
+              plan: _dailyPlan!,
+              onConsultCoach: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const CoachChatScreen()),
+                );
+              },
+            ),
+
+          // Shortcut to Coach Insight Dashboard
+          GestureDetector(
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const CoachInsightScreen()),
+              );
+            },
+            child: Container(
+              margin: const EdgeInsets.only(bottom: 20),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              decoration: BoxDecoration(
+                color: AppColors.primary.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withValues(alpha: 0.15),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(Icons.insights_rounded, color: AppColors.primary, size: 20),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Athlete Intelligence Report 📊',
+                          style: TextStyle(
+                            fontSize: 13.5,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                        Text(
+                          'วิเคราะห์ผลการนอน สภาพอากาศ และความเครียดต่อเพซ',
+                          style: TextStyle(fontSize: 11, color: AppColors.textSecondary),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Icon(Icons.chevron_right_rounded, color: AppColors.primary, size: 20),
+                ],
+              ),
+            ),
+          ),
 
           if (_loading)
             Padding(

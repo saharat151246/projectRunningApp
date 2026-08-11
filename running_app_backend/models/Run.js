@@ -12,6 +12,9 @@ const runSchema = new mongoose.Schema(
     avg_pace: { type: Number, default: null },
     mood: { type: String, enum: MOOD_VALUES, default: null },
     note: { type: String, default: null, maxlength: 500 },
+    sleep_hours: { type: Number, default: null, min: 0, max: 24 },
+    stress_level: { type: String, enum: ['low', 'medium', 'high'], default: null },
+    weather: { type: String, enum: ['cool', 'hot', 'rainy', 'normal'], default: null },
     route: [
       {
         lat: Number,

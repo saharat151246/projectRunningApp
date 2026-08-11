@@ -114,19 +114,72 @@ class _CoachChatPopupState extends State<CoachChatPopup> {
           color: Colors.transparent,
           borderRadius: BorderRadius.circular(_open ? 22 : 28),
           child: AnimatedContainer(
-            duration: const Duration(milliseconds: 220), curve: Curves.easeOut,
+            duration: const Duration(milliseconds: 250),
+            curve: Curves.fastOutSlowIn,
             width: width,
             height: height,
-            decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(_open ? 22 : 28), boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: .2), blurRadius: 24, offset: Offset(0, 8))]),
-            child: _open ? _panel() : IconButton(onPressed: () => setState(() => _open = true), icon: Icon(Icons.smart_toy_rounded, color: AppColors.primary), tooltip: 'เปิด AI Coach'),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(_open ? 22 : 28),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: .2),
+                  blurRadius: 24,
+                  offset: const Offset(0, 8),
+                ),
+              ],
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(_open ? 22 : 28),
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 180),
+                switchInCurve: Curves.easeOut,
+                switchOutCurve: Curves.easeIn,
+                child: _open
+                    ? _panel(key: const ValueKey('chat-panel'))
+                    : IconButton(
+                        key: const ValueKey('chat-icon'),
+                        onPressed: () => setState(() => _open = true),
+                        icon: Icon(Icons.smart_toy_rounded, color: AppColors.primary),
+                        tooltip: 'เปิด AI Coach',
+                      ),
+              ),
+            ),
           ),
         ),
       ),
     );
   }
 
-  Widget _panel() => Column(children: [
-    Container(padding: EdgeInsets.fromLTRB(16, 12, 8, 12), decoration: BoxDecoration(gradient: LinearGradient(colors: AppColors.primaryGradient), borderRadius: BorderRadius.vertical(top: Radius.circular(22))), child: Row(children: [Icon(Icons.psychology_alt_rounded, color: Colors.white), SizedBox(width: 9), Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text('AI Coach', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800)), Text('ผู้ช่วยฝึกวิ่งของคุณ', style: TextStyle(color: Colors.white70, fontSize: 11))])), IconButton(onPressed: () => setState(() => _open = false), icon: Icon(Icons.close_rounded, color: Colors.white))])),
+  Widget _panel({Key? key}) => Column(
+        key: key,
+        children: [
+          Container(
+            padding: const EdgeInsets.fromLTRB(16, 12, 8, 12),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(colors: AppColors.primaryGradient),
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(22)),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.psychology_alt_rounded, color: Colors.white),
+                const SizedBox(width: 9),
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('AI Coach', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800)),
+                      Text('ผู้ช่วยฝึกวิ่งของคุณ', style: TextStyle(color: Colors.white70, fontSize: 11)),
+                    ],
+                  ),
+                ),
+                IconButton(
+                  onPressed: () => setState(() => _open = false),
+                  icon: const Icon(Icons.close_rounded, color: Colors.white),
+                ),
+              ],
+            ),
+          ),
       Expanded(child: ListView.builder(controller: _scroll, padding: EdgeInsets.all(12), itemCount: _messages.length + (_sending ? 1 : 0), itemBuilder: (_, i) { if (i == _messages.length) return Padding(padding: EdgeInsets.all(8), child: Align(alignment: Alignment.centerLeft, child: SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2)))); final m = _messages[i]; return Align(alignment: m.isUser ? Alignment.centerRight : Alignment.centerLeft, child: Container(margin: EdgeInsets.only(bottom: 8), padding: EdgeInsets.symmetric(horizontal: 12, vertical: 9), constraints: BoxConstraints(maxWidth: 285), decoration: BoxDecoration(color: m.isUser ? AppColors.primary : AppColors.background, borderRadius: BorderRadius.circular(14)), child: Text(m.text, style: TextStyle(fontSize: 13, height: 1.35, color: m.isUser ? Colors.white : AppColors.textPrimary)))); })),
     Padding(
       padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),

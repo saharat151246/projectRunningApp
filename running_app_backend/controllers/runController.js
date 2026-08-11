@@ -104,10 +104,10 @@ exports.deleteRun = async (req, res) => {
   }
 };
 
-// PATCH /api/runs/:id  (เช็คอินความรู้สึกหลังวิ่ง - mood + note)
+// PATCH /api/runs/:id  (เช็คอินความรู้สึกหลังวิ่ง - mood + note + recovery)
 exports.updateRun = async (req, res) => {
   try {
-    const { mood, note } = req.body;
+    const { mood, note, sleep_hours, stress_level, weather } = req.body;
 
     if (mood !== undefined && mood !== null && !MOOD_VALUES.includes(mood)) {
       return res.status(400).json({
@@ -117,10 +117,19 @@ exports.updateRun = async (req, res) => {
     if (note !== undefined && note !== null && String(note).length > 500) {
       return res.status(400).json({ message: 'note ต้องไม่เกิน 500 ตัวอักษร' });
     }
+    if (stress_level !== undefined && stress_level !== null && !['low', 'medium', 'high'].includes(stress_level)) {
+      return res.status(400).json({ message: 'stress_level ต้องเป็น low, medium, หรือ high' });
+    }
+    if (weather !== undefined && weather !== null && !['cool', 'hot', 'rainy', 'normal'].includes(weather)) {
+      return res.status(400).json({ message: 'weather ต้องเป็น cool, hot, rainy, หรือ normal' });
+    }
 
     const update = {};
     if (mood !== undefined) update.mood = mood;
     if (note !== undefined) update.note = note;
+    if (sleep_hours !== undefined) update.sleep_hours = sleep_hours != null ? Number(sleep_hours) : null;
+    if (stress_level !== undefined) update.stress_level = stress_level;
+    if (weather !== undefined) update.weather = weather;
 
     const run = await Run.findOneAndUpdate(
       { _id: req.params.id, user_id: req.userId },

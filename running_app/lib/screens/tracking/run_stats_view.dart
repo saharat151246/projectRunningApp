@@ -171,6 +171,21 @@ class RunStatsView extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
+          Row(
+            children: [
+              Icon(Icons.bar_chart_rounded, color: AppColors.primary, size: 18),
+              const SizedBox(width: 6),
+              const Text(
+                'เพซแบ่งตามกิโลเมตร',
+                style: TextStyle(
+                  color: Colors.white70,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
           if (splitCount == 0)
             SizedBox(
               height: 135,

@@ -93,11 +93,14 @@ class RunService {
     }
   }
 
-  /// บันทึกเช็คอินความรู้สึกหลังวิ่ง (mood + note) เข้ากับการวิ่งที่ระบุ
+  /// บันทึกเช็คอินความรู้สึกและข้อมูลฟื้นฟูหลังวิ่ง (mood + note + recovery)
   Future<RunApiResult> updateMoodCheckin({
     required String runId,
     RunMood? mood,
     String? note,
+    double? sleepHours,
+    String? stressLevel,
+    String? weather,
   }) async {
     try {
       final res = await http
@@ -107,6 +110,9 @@ class RunService {
             body: jsonEncode({
               if (mood != null) 'mood': mood.apiValue,
               if (note != null) 'note': note,
+              if (sleepHours != null) 'sleep_hours': sleepHours,
+              if (stressLevel != null) 'stress_level': stressLevel,
+              if (weather != null) 'weather': weather,
             }),
           )
           .timeout(const Duration(seconds: 12));

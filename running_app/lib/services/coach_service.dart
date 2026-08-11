@@ -38,6 +38,36 @@ class CoachService {
     }
   }
 
+  /// ดึงแผนซ้อมประจำวันจาก AI Coach
+  Future<DailyPlanItem> fetchDailyPlan() async {
+    try {
+      final res = await http.get(
+        Uri.parse('${ApiConfig.baseUrl}/coach/daily-plan'),
+        headers: _authHeaders,
+      ).timeout(const Duration(seconds: 20));
+
+      if (res.statusCode != 200) return DailyPlanItem.empty();
+      return DailyPlanItem.fromJson(jsonDecode(res.body) as Map<String, dynamic>);
+    } catch (_) {
+      return DailyPlanItem.empty();
+    }
+  }
+
+  /// ดึงข้อมูลวิเคราะห์เชิงลึกระยะยาว (Sleep/Stress vs Pace correlation)
+  Future<CoachInsightReport> fetchInsights() async {
+    try {
+      final res = await http.get(
+        Uri.parse('${ApiConfig.baseUrl}/coach/insights'),
+        headers: _authHeaders,
+      ).timeout(const Duration(seconds: 20));
+
+      if (res.statusCode != 200) return CoachInsightReport.empty();
+      return CoachInsightReport.fromJson(jsonDecode(res.body) as Map<String, dynamic>);
+    } catch (_) {
+      return CoachInsightReport.empty();
+    }
+  }
+
   /// ส่งข้อความคุยกับ AI Coach พร้อมประวัติการคุยล่าสุด (สำหรับ multi-turn context)
   Future<ChatReply> sendMessage({
     required String message,

@@ -109,6 +109,9 @@ class RunDetail {
   final List<LatLng> route;
   final RunMood? mood;
   final String? note;
+  final double? sleepHours;
+  final String? stressLevel;
+  final String? weather;
 
   RunDetail({
     required this.id,
@@ -120,6 +123,9 @@ class RunDetail {
     required this.route,
     this.mood,
     this.note,
+    this.sleepHours,
+    this.stressLevel,
+    this.weather,
   });
 
   factory RunDetail.fromJson(Map<String, dynamic> json) {
@@ -133,6 +139,9 @@ class RunDetail {
       avgPace: (json['avg_pace'] as num?)?.toDouble(),
       mood: RunMoodX.fromApiValue(json['mood'] as String?),
       note: json['note'] as String?,
+      sleepHours: (json['sleep_hours'] as num?)?.toDouble(),
+      stressLevel: json['stress_level'] as String?,
+      weather: json['weather'] as String?,
       route: routeRaw
           .map((p) => LatLng(
                 (p['lat'] as num).toDouble(),
