@@ -1,5 +1,7 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../theme/app_theme.dart';
 import '../../services/auth_service.dart';
 import '../../services/theme_controller.dart';
@@ -134,18 +136,36 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     );
                   }).toList(),
                 ),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: avatarUrlCtrl,
-                  onChanged: (val) {
-                    setDialogState(() {
-                      selectedAvatar = val.trim();
-                    });
-                  },
-                  decoration: const InputDecoration(
-                    labelText: 'หรือวาง URL รูปภาพ (https://...)',
-                    prefixIcon: Icon(Icons.link_rounded),
-                    isDense: true,
+
+                const SizedBox(height: 12),
+                // Pick from gallery button
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: () async {
+                      final picker = ImagePicker();
+                      final picked = await picker.pickImage(
+                        source: ImageSource.gallery,
+                        maxWidth: 256,
+                        maxHeight: 256,
+                        imageQuality: 70,
+                      );
+                      if (picked == null) return;
+                      final bytes = await picked.readAsBytes();
+                      final b64 = base64Encode(bytes);
+                      final ext = picked.path.toLowerCase().endsWith('.png') ? 'png' : 'jpeg';
+                      setDialogState(() {
+                        selectedAvatar = 'data:image/$ext;base64,$b64';
+                      });
+                    },
+                    icon: Icon(Icons.photo_library_rounded, color: AppColors.primary),
+                    label: Text('เลือกจากคลังรูปภาพ',
+                        style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.w600)),
+                    style: OutlinedButton.styleFrom(
+                      side: BorderSide(color: AppColors.primary),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -206,6 +226,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                 if (!mounted) return;
                 if (result.success) {
+                  setState(() {}); // Force rebuild เพื่อแสดงรูปใหม่ทันที
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text('บันทึกข้อมูลส่วนตัวลงฐานข้อมูลเรียบร้อยแล้ว ✨')),
                   );
