@@ -1,7 +1,10 @@
 const Run = require('../models/Run');
-const { buildCoachContext, buildFallbackDailyPlan } = require('../utils/aiCoach');
+const { buildCoachContext, buildFallbackDailyPlan, computeLongTermInsights } = require('../utils/aiCoach');
 
 const GEMINI_MODEL = 'gemini-3.1-flash-lite';
+
+const INSIGHTS_SYSTEM_PROMPT = `คุณคือ AI Athlete Data Analyst ที่วิเคราะห์ความสัมพันธ์ระหว่างการนอน, ความเครียด, สภาพอากาศ กับสมรรถภาพการวิ่ง
+จงเขียนสรุปพฤติกรรมระยะยาว (3-4 ประโยคเป็นภาษาไทย) จากสถิติที่ได้รับ เน้นชี้ให้เห็นจุดแข็งและสิ่งที่ควรปรับปรุงเกี่ยวกับการพักฟื้นกับการวิ่งอย่างเห็นภาพ`;
 
 const SYSTEM_PROMPT = `คุณคือ AI Coach ผู้ช่วยแนะนำการฝึกซ้อมวิ่งในแอปพลิเคชันวิ่ง
 กติกา:
@@ -196,12 +199,7 @@ exports.getDailyPlan = async (req, res) => {
   }
 };
 
-const { buildCoachContext, buildFallbackDailyPlan, computeLongTermInsights } = require('../utils/aiCoach');
-
-const GEMINI_MODEL = 'gemini-3.1-flash-lite';
-
-const INSIGHTS_SYSTEM_PROMPT = `คุณคือ AI Athlete Data Analyst ที่วิเคราะห์ความสัมพันธ์ระหว่างการนอน, ความเครียด, สภาพอากาศ กับสมรรถภาพการวิ่ง
-จงเขียนสรุปพฤติกรรมระยะยาว (3-4 ประโยคเป็นภาษาไทย) จากสถิติที่ได้รับ เน้นชี้ให้เห็นจุดแข็งและสิ่งที่ควรปรับปรุงเกี่ยวกับการพักฟื้นกับการวิ่งอย่างเห็นภาพ`;
+// GET /api/coach/insights (ดึงผลวิเคราะห์เชิงลึกระยะยาว)
 
 async function callGeminiInsights(insightsSummary) {
   const apiKey = process.env.GEMINI_API_KEY;
