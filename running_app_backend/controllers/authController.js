@@ -202,3 +202,71 @@ exports.updateProfile = async (req, res) => {
   }
 };
 
+// POST /api/auth/forgot-password (ขอรับรหัส OTP สำหรับรีเซ็ตรหัสผ่าน)
+exports.forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email || !email.trim()) {
+      return res.status(400).json({ message: 'กรุณากรอกอีเมล' });
+    }
+
+    const cleanEmail = email.trim().toLowerCase();
+    const user = await User.findOne({ email: cleanEmail });
+    if (!user) {
+      return res.status(404).json({ message: 'ไม่พบบัญชีผู้ใช้ที่มีอีเมลนี้' });
+    }
+
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    user.reset_otp = otp;
+    user.reset_otp_expires = new Date(Date.now() + 15 * 60 * 1000); // 15 นาที
+    await user.save();
+
+    res.json({
+      message: 'สร้างรหัส OTP เรียบร้อยแล้ว',
+      otp, // ส่งรหัสกลับเพื่อสะดวกทดสอบ (ในระบบจริงส่งผ่าน email)
+    });
+  } catch (err) {
+    console.error('forgotPassword error:', err);
+    res.status(500).json({ message: 'เกิดข้อผิดพลาดฝั่งเซิร์ฟเวอร์' });
+  }
+};
+
+// POST /api/auth/reset-password (ยืนยัน OTP และตั้งรหัสผ่านใหม่)
+exports.resetPassword = async (req, res) => {
+  try {
+    const { email, otp, newPassword } = req.body;
+    if (!email || !otp || !newPassword) {
+      return res.status(400).json({ message: 'ข้อมูลไม่ครบถ้วน (ต้องมี email, otp, newPassword)' });
+    }
+
+    if (newPassword.length < 8) {
+      return res.status(400).json({ message: 'รหัสผ่านใหม่ต้องมีความยาวอย่างน้อย 8 ตัวอักษร' });
+    }
+
+    const cleanEmail = email.trim().toLowerCase();
+    const user = await User.findOne({ email: cleanEmail });
+    if (!user) {
+      return res.status(404).json({ message: 'ไม่พบบัญชีผู้ใช้นี้' });
+    }
+
+    if (!user.reset_otp || user.reset_otp !== otp.trim()) {
+      return res.status(400).json({ message: 'รหัส OTP ไม่ถูกต้อง' });
+    }
+
+    if (user.reset_otp_expires && new Date() > user.reset_otp_expires) {
+      return res.status(400).json({ message: 'รหัส OTP หมดอายุแล้ว กรุณาขอรหัสใหม่' });
+    }
+
+    user.password_hash = await bcrypt.hash(newPassword, 10);
+    user.reset_otp = null;
+    user.reset_otp_expires = null;
+    user.auth_provider = 'email'; // Ensure user can login with password
+    await user.save();
+
+    res.json({ message: 'เปลี่ยนรหัสผ่านเรียบร้อยแล้ว เข้าสู่ระบบด้วยรหัสผ่านใหม่ได้ทันที' });
+  } catch (err) {
+    console.error('resetPassword error:', err);
+    res.status(500).json({ message: 'เกิดข้อผิดพลาดฝั่งเซิร์ฟเวอร์' });
+  }
+};
+

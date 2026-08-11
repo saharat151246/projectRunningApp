@@ -13,6 +13,8 @@ const userSchema = new mongoose.Schema(
     height: { type: Number, default: null },
     age: { type: Number, default: null },
     gender: { type: String, default: null },
+    reset_otp: { type: String, default: null },
+    reset_otp_expires: { type: Date, default: null },
   },
   { timestamps: true }
 );

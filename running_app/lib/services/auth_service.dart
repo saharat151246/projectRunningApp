@@ -9,7 +9,8 @@ import 'api_config.dart';
 class AuthResult {
   final bool success;
   final String? errorMessage;
-  AuthResult({required this.success, this.errorMessage});
+  final String? otpCode;
+  AuthResult({required this.success, this.errorMessage, this.otpCode});
 }
 
 /// จัดการ Authentication ทั้งหมด: เรียก API, เก็บ JWT token อย่างปลอดภัย,
@@ -197,6 +198,59 @@ class AuthService extends ChangeNotifier {
       if (res.statusCode == 200) {
         currentUser = data['user'] as Map<String, dynamic>;
         notifyListeners();
+        return AuthResult(success: true);
+      }
+      return AuthResult(success: false, errorMessage: data['message']?.toString());
+    } catch (e) {
+      return AuthResult(success: false, errorMessage: _friendlyError(e));
+    }
+  }
+
+  /// ขอรับรหัส OTP สำหรับตั้งรหัสผ่านใหม่
+  Future<AuthResult> forgotPassword({required String email}) async {
+    try {
+      final res = await http
+          .post(
+            Uri.parse('${ApiConfig.baseUrl}/auth/forgot-password'),
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode({'email': email.trim()}),
+          )
+          .timeout(const Duration(seconds: 12));
+
+      final data = jsonDecode(res.body) as Map<String, dynamic>;
+      if (res.statusCode == 200) {
+        return AuthResult(
+          success: true,
+          otpCode: data['otp'] as String?,
+        );
+      }
+      return AuthResult(success: false, errorMessage: data['message']?.toString());
+    } catch (e) {
+      return AuthResult(success: false, errorMessage: _friendlyError(e));
+    }
+  }
+
+  /// ยืนยันรหัส OTP และตั้งรหัสผ่านใหม่
+  Future<AuthResult> resetPassword({
+    required String email,
+    required String otp,
+    required String newPassword,
+  }) async {
+    try {
+      final res = await http
+          .post(
+            Uri.parse('${ApiConfig.baseUrl}/auth/reset-password'),
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode({
+              'email': email.trim(),
+              'otp': otp.trim(),
+              'newPassword': newPassword.trim(),
+            }),
+          )
+          .timeout(const Duration(seconds: 12));
+
+      final data = jsonDecode(res.body) as Map<String, dynamic>;
+      if (res.statusCode == 200) {
         return AuthResult(success: true);
       }
       return AuthResult(success: false, errorMessage: data['message']?.toString());

@@ -243,6 +243,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             return ListTile(
               onTap: () async {
                 await ThemeController.instance.setMode(mode);
+                if (mounted) setState(() {});
                 setSheetState(() {});
               },
               leading: Icon(icon, color: selected ? AppColors.primary : AppColors.textSecondary),

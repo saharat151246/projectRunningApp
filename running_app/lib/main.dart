@@ -27,6 +27,12 @@ class RunningApp extends StatelessWidget {
           themeMode: ThemeController.instance.mode,
           themeAnimationDuration: const Duration(milliseconds: 400),
           themeAnimationCurve: Curves.easeInOut,
+          builder: (context, child) {
+            return KeyedSubtree(
+              key: ValueKey(ThemeController.instance.rebuildToken),
+              child: child!,
+            );
+          },
           home: const SplashScreen(),
         );
       },
