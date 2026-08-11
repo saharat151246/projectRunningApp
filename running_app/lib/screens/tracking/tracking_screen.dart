@@ -47,12 +47,14 @@ class _TrackingScreenState extends State<TrackingScreen> {
   int _seconds = 0;
   bool _isRunning = false;
   bool _isPaused = false;
-  DateTime? _runStartTime; // เวลาเริ่มวิ่งจริง (ตั้งครั้งเดียวตอนกดเริ่ม ไม่ถูกรีเซ็ตตอน resume)
+  DateTime?
+      _runStartTime; // เวลาเริ่มวิ่งจริง (ตั้งครั้งเดียวตอนกดเริ่ม ไม่ถูกรีเซ็ตตอน resume)
 
   double _totalDistanceMeters = 0;
   Position? _lastPosition;
   final List<LatLng> _routePoints = [];
-  final List<DateTime> _routeTimestamps = []; // เวลาที่บันทึกแต่ละจุด คู่กับ _routePoints
+  final List<DateTime> _routeTimestamps =
+      []; // เวลาที่บันทึกแต่ละจุด คู่กับ _routePoints
 
   // ติดตามช่วง (split) ปัจจุบัน เพื่อคำนวณเพซแยกรายกม.
   int _splitSeconds = 0;
@@ -95,7 +97,8 @@ class _TrackingScreenState extends State<TrackingScreen> {
     if (!serviceEnabled) {
       setState(() {
         _checkingPermission = false;
-        _errorMessage = 'กรุณาเปิด GPS/Location Service ของอุปกรณ์ก่อนเริ่มวิ่ง';
+        _errorMessage =
+            'กรุณาเปิด GPS/Location Service ของอุปกรณ์ก่อนเริ่มวิ่ง';
       });
       return;
     }
@@ -141,9 +144,8 @@ class _TrackingScreenState extends State<TrackingScreen> {
     } catch (e) {
       setState(() {
         _checkingPermission = false;
-        _errorMessage = e is TimeoutException
-            ? e.message
-            : 'ไม่สามารถดึงตำแหน่งได้: $e';
+        _errorMessage =
+            e is TimeoutException ? e.message : 'ไม่สามารถดึงตำแหน่งได้: $e';
       });
     }
   }
@@ -169,7 +171,10 @@ class _TrackingScreenState extends State<TrackingScreen> {
             Expanded(
               child: Text(
                 'แจ้งเตือนเสี่ยงบาดเจ็บ',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFFC01C1C)),
+                style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFFC01C1C)),
               ),
             ),
           ],
@@ -193,7 +198,10 @@ class _TrackingScreenState extends State<TrackingScreen> {
               ),
               child: const Text(
                 '💡 คำแนะนำ: แนะนำให้วิ่งเพซสบายๆ หรือลดระยะทางในการวิ่งครั้งนี้ลง 20-30%',
-                style: TextStyle(fontSize: 12, color: Color(0xFF991B1B), fontWeight: FontWeight.w600),
+                style: TextStyle(
+                    fontSize: 12,
+                    color: Color(0xFF991B1B),
+                    fontWeight: FontWeight.w600),
               ),
             ),
           ],
@@ -211,7 +219,8 @@ class _TrackingScreenState extends State<TrackingScreen> {
           ElevatedButton(
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFFE82A2A),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10)),
             ),
             onPressed: () {
               Navigator.pop(ctx);
@@ -243,9 +252,8 @@ class _TrackingScreenState extends State<TrackingScreen> {
       accuracy: LocationAccuracy.high,
       distanceFilter: 3,
     );
-    _positionStream =
-        Geolocator.getPositionStream(locationSettings: settings)
-            .listen(_onPositionUpdate);
+    _positionStream = Geolocator.getPositionStream(locationSettings: settings)
+        .listen(_onPositionUpdate);
   }
 
   /// อัปเดตเพซของช่วงกม.ปัจจุบันที่ยังวิ่งไม่ครบ (live split) - เรียกทุกวินาที
@@ -333,8 +341,9 @@ class _TrackingScreenState extends State<TrackingScreen> {
       return {
         'lat': _routePoints[i].latitude,
         'lng': _routePoints[i].longitude,
-        'timestamp': (i < _routeTimestamps.length ? _routeTimestamps[i] : endTime)
-            .toIso8601String(),
+        'timestamp':
+            (i < _routeTimestamps.length ? _routeTimestamps[i] : endTime)
+                .toIso8601String(),
       };
     });
 
@@ -351,8 +360,10 @@ class _TrackingScreenState extends State<TrackingScreen> {
     if (!mounted) return;
 
     final achievementLines = <String>[
-      for (final b in result.newlyUnlockedBadges) '${b.emoji} ปลดล็อกเหรียญ: ${b.title}',
-      for (final m in result.newlyCompletedMissions) '🎯 สำเร็จภารกิจ: ${m.title}',
+      for (final b in result.newlyUnlockedBadges)
+        '${b.emoji} ปลดล็อกเหรียญ: ${b.title}',
+      for (final m in result.newlyCompletedMissions)
+        '🎯 สำเร็จภารกิจ: ${m.title}',
     ];
 
     showDialog(
@@ -374,7 +385,9 @@ class _TrackingScreenState extends State<TrackingScreen> {
             Row(
               children: [
                 Icon(
-                  savedToServer ? Icons.cloud_done_rounded : Icons.cloud_off_rounded,
+                  savedToServer
+                      ? Icons.cloud_done_rounded
+                      : Icons.cloud_off_rounded,
                   size: 16,
                   color: savedToServer ? AppColors.accent : Colors.orange,
                 ),
@@ -399,7 +412,9 @@ class _TrackingScreenState extends State<TrackingScreen> {
               ...achievementLines.map((line) => Padding(
                     padding: const EdgeInsets.only(bottom: 4),
                     child: Text(line,
-                        style: TextStyle(fontWeight: FontWeight.w700, color: AppColors.gold)),
+                        style: TextStyle(
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.gold)),
                   )),
             ],
           ],
@@ -413,7 +428,8 @@ class _TrackingScreenState extends State<TrackingScreen> {
               if (savedToServer && runId != null) {
                 // เด้งไปเช็คอินความรู้สึกก่อนกลับหน้าหลัก
                 await Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => MoodCheckinScreen(runId: runId)),
+                  MaterialPageRoute(
+                      builder: (_) => MoodCheckinScreen(runId: runId)),
                 );
               }
 
@@ -510,7 +526,9 @@ class _TrackingScreenState extends State<TrackingScreen> {
                 );
               },
             ),
-          if (!_checkingPermission && _errorMessage == null && !MapConfig.hasValidToken)
+          if (!_checkingPermission &&
+              _errorMessage == null &&
+              !MapConfig.hasValidToken)
             Positioned(
               left: 0,
               right: 0,
@@ -645,7 +663,8 @@ class _TrackingScreenState extends State<TrackingScreen> {
   }
 
   /// Stage sheet: ลอยทับแผนที่ ลากขึ้น-ลงได้ 2 ระดับ (peek / full) พร้อม snap
-  Widget _buildStageSheet(double topInset, double bottomInset, double screenHeight) {
+  Widget _buildStageSheet(
+      double topInset, double bottomInset, double screenHeight) {
     return NotificationListener<DraggableScrollableNotification>(
       onNotification: (notification) {
         _sheetExtentNotifier.value = notification.extent;
@@ -662,7 +681,8 @@ class _TrackingScreenState extends State<TrackingScreen> {
           return Container(
             decoration: BoxDecoration(
               color: AppColors.secondary,
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(28)),
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withValues(alpha: 0.25),
@@ -743,7 +763,9 @@ class _TrackingScreenState extends State<TrackingScreen> {
               Text(
                 _isRunning ? 'วิ่ง' : 'พร้อมวิ่ง',
                 style: const TextStyle(
-                    color: Colors.white, fontSize: 15, fontWeight: FontWeight.w700),
+                    color: Colors.white,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700),
               ),
               IconButton(
                 onPressed: _expandSheet,
@@ -768,8 +790,10 @@ class _TrackingScreenState extends State<TrackingScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
                       _peekMetric(_formatTime(seconds), 'เวลา'),
-                      _peekMetric(_formatPace(paceMinPerKm), 'ค่าเฉลี่ยช่วง (/กม.)'),
-                      _peekMetric(distanceKm.toStringAsFixed(2), 'ระยะทาง (กม.)'),
+                      _peekMetric(
+                          _formatPace(paceMinPerKm), 'ค่าเฉลี่ยช่วง (/กม.)'),
+                      _peekMetric(
+                          distanceKm.toStringAsFixed(2), 'ระยะทาง (กม.)'),
                     ],
                   );
                 },
@@ -795,7 +819,8 @@ class _TrackingScreenState extends State<TrackingScreen> {
                   child: OutlinedButton(
                     onPressed: _pauseResume,
                     style: OutlinedButton.styleFrom(
-                      side: BorderSide(color: Colors.white.withValues(alpha: 0.3)),
+                      side: BorderSide(
+                          color: Colors.white.withValues(alpha: 0.3)),
                     ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -852,7 +877,8 @@ class _TrackingScreenState extends State<TrackingScreen> {
         const SizedBox(height: 4),
         Text(label,
             textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 11)),
+            style: TextStyle(
+                color: Colors.white.withValues(alpha: 0.5), fontSize: 11)),
       ],
     );
   }
@@ -926,7 +952,8 @@ class RunStatsView extends StatelessWidget {
         Expanded(
           child: SingleChildScrollView(
             child: Padding(
-              padding: EdgeInsets.fromLTRB(0, topPadding > 0 ? topPadding * 0.4 : 8, 0, 0),
+              padding: EdgeInsets.fromLTRB(
+                  0, topPadding > 0 ? topPadding * 0.4 : 8, 0, 0),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -997,16 +1024,7 @@ class RunStatsView extends StatelessWidget {
                         ),
                         const SizedBox(height: 32),
                         _buildSplitsRow(hasLiveSplit),
-                        const SizedBox(height: 10),
-                        Text(
-                          'ช่วง (/กม.)',
-                          style: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.55),
-                            fontSize: 13,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        const SizedBox(height: 12),
+                        const SizedBox(height: 16),
                       ],
                     ),
                   ),
@@ -1022,36 +1040,94 @@ class RunStatsView extends StatelessWidget {
 
   Widget _buildSplitsRow(bool hasLiveSplit) {
     final splitCount = completedSplitPaces.length + (hasLiveSplit ? 1 : 0);
-    if (splitCount == 0) {
-      return SizedBox(
-        height: 70,
-        child: Center(
-          child: Text(
-            'ยังไม่ครบ 1 กม. แรก',
-            style: TextStyle(color: Colors.white.withValues(alpha: 0.4), fontSize: 12.5),
-          ),
-        ),
-      );
+
+    final validPaces = <double>[];
+    for (final p in completedSplitPaces) {
+      if (p > 0 && !p.isInfinite && !p.isNaN) validPaces.add(p);
+    }
+    if (hasLiveSplit &&
+        currentSplitPaceMinPerKm > 0 &&
+        !currentSplitPaceMinPerKm.isInfinite &&
+        !currentSplitPaceMinPerKm.isNaN) {
+      validPaces.add(currentSplitPaceMinPerKm);
     }
 
-    return SizedBox(
-      height: 70,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        reverse: true, // เอาช่วงล่าสุด/ปัจจุบันไว้ให้เห็นก่อนเสมอ
-        itemCount: splitCount,
-        separatorBuilder: (_, __) => const SizedBox(width: 12),
-        itemBuilder: (context, reversedIndex) {
-          final index = splitCount - 1 - reversedIndex;
-          final isLive = hasLiveSplit && index == splitCount - 1;
-          // เพซที่แสดงบนหัวแท่ง = เพซเฉลี่ยของกม.ที่ index นั้นๆ (ไม่ใช่เพซรวมทั้งหมด)
-          final pace = isLive ? currentSplitPaceMinPerKm : completedSplitPaces[index];
-          return _SplitChip(
-            splitLabel: '${index + 1}',
-            paceLabel: _formatPace(pace),
-            isLive: isLive,
-          );
-        },
+    final double minPaces =
+        validPaces.isEmpty ? 5.0 : validPaces.reduce((a, b) => a < b ? a : b);
+    final double maxPaces =
+        validPaces.isEmpty ? 5.0 : validPaces.reduce((a, b) => a > b ? a : b);
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.07),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (splitCount == 0)
+            SizedBox(
+              height: 135,
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.directions_run_rounded,
+                        color: Colors.white.withValues(alpha: 0.25), size: 32),
+                    const SizedBox(height: 8),
+                    Text(
+                      'เริ่มวิ่งเพื่อสะสมแท่งเพซรายกิโลเมตร',
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.4),
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            )
+          else
+            SizedBox(
+              height: 135,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                reverse:
+                    true, // เรียงจากขวาไปซ้าย: ช่วงล่าสุด/ปัจจุบันอยู่ขวาสุดเสมอ
+                itemCount: splitCount,
+                separatorBuilder: (_, __) => const SizedBox(width: 14),
+                itemBuilder: (context, reversedIndex) {
+                  final index = splitCount - 1 - reversedIndex;
+                  final isLive = hasLiveSplit && index == splitCount - 1;
+                  final pace = isLive
+                      ? currentSplitPaceMinPerKm
+                      : completedSplitPaces[index];
+
+                  double fillRatio;
+                  if (pace <= 0 || pace.isInfinite || pace.isNaN) {
+                    fillRatio = 0.3;
+                  } else if (maxPaces == minPaces) {
+                    fillRatio = 0.7;
+                  } else {
+                    fillRatio = 0.35 +
+                        0.55 * ((maxPaces - pace) / (maxPaces - minPaces));
+                  }
+                  fillRatio = fillRatio.clamp(0.25, 1.0);
+
+                  return _SplitColumnBar(
+                    splitLabel: '${index + 1}',
+                    paceLabel: _formatPace(pace),
+                    isLive: isLive,
+                    fillRatio: fillRatio,
+                  );
+                },
+              ),
+            ),
+        ],
       ),
     );
   }
@@ -1060,12 +1136,15 @@ class RunStatsView extends StatelessWidget {
     return Container(
       width: double.infinity,
       padding: EdgeInsets.fromLTRB(
-        20, 18, 20, 16 + MediaQuery.of(context).padding.bottom),
+          20, 18, 20, 16 + MediaQuery.of(context).padding.bottom),
       decoration: BoxDecoration(
         color: AppColors.secondary,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
         boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.25), blurRadius: 20, offset: const Offset(0, -6)),
+          BoxShadow(
+              color: Colors.black.withValues(alpha: 0.25),
+              blurRadius: 20,
+              offset: const Offset(0, -6)),
         ],
       ),
       child: Column(
@@ -1088,7 +1167,8 @@ class RunStatsView extends StatelessWidget {
                   child: ElevatedButton(
                     onPressed: onPauseResume,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: isPaused ? AppColors.accent : const Color(0xFFFF7A1A),
+                      backgroundColor:
+                          isPaused ? AppColors.accent : const Color(0xFFFF7A1A),
                       foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(27),
@@ -1098,11 +1178,14 @@ class RunStatsView extends StatelessWidget {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(isPaused ? Icons.play_arrow_rounded : Icons.pause_rounded),
+                        Icon(isPaused
+                            ? Icons.play_arrow_rounded
+                            : Icons.pause_rounded),
                         const SizedBox(width: 8),
                         Text(
                           isPaused ? 'ไปต่อ' : 'หยุดชั่วคราว',
-                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+                          style: const TextStyle(
+                              fontSize: 16, fontWeight: FontWeight.w800),
                         ),
                       ],
                     ),
@@ -1117,8 +1200,10 @@ class RunStatsView extends StatelessWidget {
                   onPressed: onStop,
                   style: OutlinedButton.styleFrom(
                     padding: EdgeInsets.zero,
-                    side: BorderSide(color: Colors.white.withValues(alpha: 0.25)),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(27)),
+                    side:
+                        BorderSide(color: Colors.white.withValues(alpha: 0.25)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(27)),
                   ),
                   child: const Icon(Icons.stop_rounded, color: Colors.white),
                 ),
@@ -1131,54 +1216,102 @@ class RunStatsView extends StatelessWidget {
   }
 }
 
-class _SplitChip extends StatelessWidget {
+class _SplitColumnBar extends StatelessWidget {
   final String splitLabel;
   final String paceLabel;
   final bool isLive;
+  final double fillRatio;
 
-  const _SplitChip({
+  const _SplitColumnBar({
     required this.splitLabel,
     required this.paceLabel,
     required this.isLive,
+    required this.fillRatio,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(
-          paceLabel,
-          style: TextStyle(
-            color: isLive ? Colors.white : Colors.white.withValues(alpha: 0.85),
-            fontSize: 13,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-        const SizedBox(height: 6),
-        Container(
-          width: 76,
-          height: 34,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: isLive
-                ? AppColors.accent
-                : Colors.white.withValues(alpha: 0.14),
-            borderRadius: BorderRadius.circular(10),
-            border: isLive
-                ? Border(bottom: BorderSide(color: AppColors.gold, width: 3))
-                : null,
-          ),
-          child: Text(
-            'กม. $splitLabel',
-            style: TextStyle(
-              color: isLive ? Colors.white : Colors.white.withValues(alpha: 0.7),
-              fontSize: 10.5,
-              fontWeight: FontWeight.w600,
+    const double maxTrackHeight = 72;
+    final double barHeight =
+        (maxTrackHeight * fillRatio).clamp(18.0, maxTrackHeight);
+
+    return SizedBox(
+      width: 48,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+            child: Text(
+              paceLabel,
+              style: TextStyle(
+                color: isLive ? AppColors.gold : Colors.white,
+                fontSize: 11.5,
+                fontWeight: FontWeight.w800,
+              ),
             ),
           ),
-        ),
-      ],
+          const SizedBox(height: 6),
+          Container(
+            height: maxTrackHeight,
+            width: 28,
+            alignment: Alignment.bottomCenter,
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
+              height: barHeight,
+              width: 28,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: isLive
+                      ? [const Color(0xFFFFB03A), const Color(0xFFFF5E62)]
+                      : AppColors.primaryGradient,
+                  begin: Alignment.bottomCenter,
+                  end: Alignment.topCenter,
+                ),
+                borderRadius: BorderRadius.circular(10),
+                boxShadow: [
+                  BoxShadow(
+                    color: (isLive ? AppColors.gold : AppColors.primary)
+                        .withValues(alpha: isLive ? 0.5 : 0.3),
+                    blurRadius: isLive ? 8 : 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+                border: isLive
+                    ? Border.all(
+                        color: Colors.white.withValues(alpha: 0.9), width: 1.5)
+                    : null,
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+            decoration: BoxDecoration(
+              color: isLive
+                  ? AppColors.gold.withValues(alpha: 0.2)
+                  : Colors.white.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(8),
+              border: isLive
+                  ? Border.all(
+                      color: AppColors.gold.withValues(alpha: 0.5), width: 1)
+                  : null,
+            ),
+            child: Text(
+              'กม. $splitLabel',
+              style: TextStyle(
+                color: isLive ? AppColors.gold : Colors.white70,
+                fontSize: 10.5,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

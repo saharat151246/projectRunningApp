@@ -128,16 +128,7 @@ class RunStatsView extends StatelessWidget {
                     ),
                     const SizedBox(height: 32),
                     _buildSplitsRow(hasLiveSplit),
-                    const SizedBox(height: 10),
-                    Text(
-                      'ช่วง (/กม.)',
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.55),
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 16),
                   ],
                 ),
               ),
@@ -151,34 +142,94 @@ class RunStatsView extends StatelessWidget {
 
   Widget _buildSplitsRow(bool hasLiveSplit) {
     final splitCount = completedSplitPaces.length + (hasLiveSplit ? 1 : 0);
-    if (splitCount == 0) {
-      return SizedBox(
-        height: 70,
-        child: Center(
-          child: Text(
-            'ยังไม่ครบ 1 กม. แรก',
-            style: TextStyle(color: Colors.white.withValues(alpha: 0.4), fontSize: 12.5),
-          ),
-        ),
-      );
+
+    final validPaces = <double>[];
+    for (final p in completedSplitPaces) {
+      if (p > 0 && !p.isInfinite && !p.isNaN) validPaces.add(p);
+    }
+    if (hasLiveSplit &&
+        currentSplitPaceMinPerKm > 0 &&
+        !currentSplitPaceMinPerKm.isInfinite &&
+        !currentSplitPaceMinPerKm.isNaN) {
+      validPaces.add(currentSplitPaceMinPerKm);
     }
 
-    return SizedBox(
-      height: 70,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        reverse: true, // เอาช่วงล่าสุด/ปัจจุบันไว้ให้เห็นก่อนเสมอ
-        itemCount: splitCount,
-        separatorBuilder: (_, __) => const SizedBox(width: 12),
-        itemBuilder: (context, reversedIndex) {
-          final index = splitCount - 1 - reversedIndex;
-          final isLive = hasLiveSplit && index == splitCount - 1;
-          final pace = isLive ? currentSplitPaceMinPerKm : completedSplitPaces[index];
-          return _SplitChip(
-            paceLabel: _formatPace(pace),
-            isLive: isLive,
-          );
-        },
+    final double minPaces =
+        validPaces.isEmpty ? 5.0 : validPaces.reduce((a, b) => a < b ? a : b);
+    final double maxPaces =
+        validPaces.isEmpty ? 5.0 : validPaces.reduce((a, b) => a > b ? a : b);
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.07),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (splitCount == 0)
+            SizedBox(
+              height: 135,
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.directions_run_rounded,
+                        color: Colors.white.withValues(alpha: 0.25), size: 32),
+                    const SizedBox(height: 8),
+                    Text(
+                      'เริ่มวิ่งเพื่อสะสมแท่งเพซรายกิโลเมตร',
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.4),
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            )
+          else
+            SizedBox(
+              height: 135,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                reverse:
+                    true, // เรียงจากขวาไปซ้าย: ช่วงล่าสุด/ปัจจุบันอยู่ขวาสุดเสมอ
+                itemCount: splitCount,
+                separatorBuilder: (_, __) => const SizedBox(width: 14),
+                itemBuilder: (context, reversedIndex) {
+                  final index = splitCount - 1 - reversedIndex;
+                  final isLive = hasLiveSplit && index == splitCount - 1;
+                  final pace = isLive
+                      ? currentSplitPaceMinPerKm
+                      : completedSplitPaces[index];
+
+                  double fillRatio;
+                  if (pace <= 0 || pace.isInfinite || pace.isNaN) {
+                    fillRatio = 0.3;
+                  } else if (maxPaces == minPaces) {
+                    fillRatio = 0.7;
+                  } else {
+                    fillRatio = 0.35 +
+                        0.55 * ((maxPaces - pace) / (maxPaces - minPaces));
+                  }
+                  fillRatio = fillRatio.clamp(0.25, 1.0);
+
+                  return _SplitColumnBar(
+                    splitLabel: '${index + 1}',
+                    paceLabel: _formatPace(pace),
+                    isLive: isLive,
+                    fillRatio: fillRatio,
+                  );
+                },
+              ),
+            ),
+        ],
       ),
     );
   }
@@ -187,12 +238,15 @@ class RunStatsView extends StatelessWidget {
     return Container(
       width: double.infinity,
       padding: EdgeInsets.fromLTRB(
-        20, 18, 20, 16 + MediaQuery.of(context).padding.bottom),
+          20, 18, 20, 16 + MediaQuery.of(context).padding.bottom),
       decoration: BoxDecoration(
         color: AppColors.secondary,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
         boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.25), blurRadius: 20, offset: const Offset(0, -6)),
+          BoxShadow(
+              color: Colors.black.withValues(alpha: 0.25),
+              blurRadius: 20,
+              offset: const Offset(0, -6)),
         ],
       ),
       child: Column(
@@ -215,7 +269,8 @@ class RunStatsView extends StatelessWidget {
                   child: ElevatedButton(
                     onPressed: onPauseResume,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: isPaused ? AppColors.accent : const Color(0xFFFF7A1A),
+                      backgroundColor:
+                          isPaused ? AppColors.accent : const Color(0xFFFF7A1A),
                       foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(27),
@@ -225,11 +280,14 @@ class RunStatsView extends StatelessWidget {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(isPaused ? Icons.play_arrow_rounded : Icons.pause_rounded),
+                        Icon(isPaused
+                            ? Icons.play_arrow_rounded
+                            : Icons.pause_rounded),
                         const SizedBox(width: 8),
                         Text(
                           isPaused ? 'ไปต่อ' : 'หยุดชั่วคราว',
-                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+                          style: const TextStyle(
+                              fontSize: 16, fontWeight: FontWeight.w800),
                         ),
                       ],
                     ),
@@ -244,8 +302,10 @@ class RunStatsView extends StatelessWidget {
                   onPressed: onStop,
                   style: OutlinedButton.styleFrom(
                     padding: EdgeInsets.zero,
-                    side: BorderSide(color: Colors.white.withValues(alpha: 0.25)),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(27)),
+                    side:
+                        BorderSide(color: Colors.white.withValues(alpha: 0.25)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(27)),
                   ),
                   child: const Icon(Icons.stop_rounded, color: Colors.white),
                 ),
@@ -258,40 +318,102 @@ class RunStatsView extends StatelessWidget {
   }
 }
 
-class _SplitChip extends StatelessWidget {
+class _SplitColumnBar extends StatelessWidget {
+  final String splitLabel;
   final String paceLabel;
   final bool isLive;
+  final double fillRatio;
 
-  const _SplitChip({required this.paceLabel, required this.isLive});
+  const _SplitColumnBar({
+    required this.splitLabel,
+    required this.paceLabel,
+    required this.isLive,
+    required this.fillRatio,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(
-          paceLabel,
-          style: TextStyle(
-            color: isLive ? Colors.white : Colors.white.withValues(alpha: 0.85),
-            fontSize: 13,
-            fontWeight: FontWeight.w700,
+    const double maxTrackHeight = 72;
+    final double barHeight =
+        (maxTrackHeight * fillRatio).clamp(18.0, maxTrackHeight);
+
+    return SizedBox(
+      width: 48,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+            child: Text(
+              paceLabel,
+              style: TextStyle(
+                color: isLive ? AppColors.gold : Colors.white,
+                fontSize: 11.5,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
           ),
-        ),
-        const SizedBox(height: 6),
-        Container(
-          width: 76,
-          height: 34,
-          decoration: BoxDecoration(
-            color: isLive
-                ? AppColors.accent
-                : Colors.white.withValues(alpha: 0.14),
-            borderRadius: BorderRadius.circular(10),
-            border: isLive
-                ? Border(bottom: BorderSide(color: AppColors.gold, width: 3))
-                : null,
+          const SizedBox(height: 6),
+          Container(
+            height: maxTrackHeight,
+            width: 28,
+            alignment: Alignment.bottomCenter,
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
+              height: barHeight,
+              width: 28,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: isLive
+                      ? [const Color(0xFFFFB03A), const Color(0xFFFF5E62)]
+                      : AppColors.primaryGradient,
+                  begin: Alignment.bottomCenter,
+                  end: Alignment.topCenter,
+                ),
+                borderRadius: BorderRadius.circular(10),
+                boxShadow: [
+                  BoxShadow(
+                    color: (isLive ? AppColors.gold : AppColors.primary)
+                        .withValues(alpha: isLive ? 0.5 : 0.3),
+                    blurRadius: isLive ? 8 : 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+                border: isLive
+                    ? Border.all(
+                        color: Colors.white.withValues(alpha: 0.9), width: 1.5)
+                    : null,
+              ),
+            ),
           ),
-        ),
-      ],
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+            decoration: BoxDecoration(
+              color: isLive
+                  ? AppColors.gold.withValues(alpha: 0.2)
+                  : Colors.white.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(8),
+              border: isLive
+                  ? Border.all(
+                      color: AppColors.gold.withValues(alpha: 0.5), width: 1)
+                  : null,
+            ),
+            child: Text(
+              'กม. $splitLabel',
+              style: TextStyle(
+                color: isLive ? AppColors.gold : Colors.white70,
+                fontSize: 10.5,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
