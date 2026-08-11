@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
@@ -248,10 +249,35 @@ class _TrackingScreenState extends State<TrackingScreen> {
       _updateCurrentSplitPace();
     });
 
-    const settings = LocationSettings(
-      accuracy: LocationAccuracy.high,
-      distanceFilter: 3,
-    );
+    late final LocationSettings settings;
+    if (defaultTargetPlatform == TargetPlatform.android) {
+      settings = AndroidSettings(
+        accuracy: LocationAccuracy.high,
+        distanceFilter: 3,
+        forceLocationManager: true,
+        intervalDuration: const Duration(seconds: 1),
+        foregroundNotificationConfig: const ForegroundNotificationConfig(
+          notificationText: 'RunMate กำลังบันทึกพิกัดการวิ่งในเบื้องหลัง',
+          notificationTitle: 'กำลังวิ่งอยู่...',
+          enableWifiLock: true,
+        ),
+      );
+    } else if (defaultTargetPlatform == TargetPlatform.iOS ||
+        defaultTargetPlatform == TargetPlatform.macOS) {
+      settings = AppleSettings(
+        accuracy: LocationAccuracy.high,
+        distanceFilter: 3,
+        activityType: ActivityType.fitness,
+        allowBackgroundLocationUpdates: true,
+        showBackgroundLocationIndicator: true,
+      );
+    } else {
+      settings = const LocationSettings(
+        accuracy: LocationAccuracy.high,
+        distanceFilter: 3,
+      );
+    }
+
     _positionStream = Geolocator.getPositionStream(locationSettings: settings)
         .listen(_onPositionUpdate);
   }
