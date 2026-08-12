@@ -62,7 +62,7 @@ class _CoachInsightScreenState extends State<CoachInsightScreen> {
           children: [
             Icon(Icons.insights_rounded, color: AppColors.primary, size: 22),
             const SizedBox(width: 8),
-            const Text('Athlete Intelligence'),
+            const Text('ข้อมูลเชิงลึกการวิ่ง'),
           ],
         ),
       ),

@@ -99,7 +99,7 @@ class _HomeScreenState extends State<HomeScreen> {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('สวัสดี 👋',
+                  Text('ยินดีต้อนรับ',
                       style: TextStyle(color: AppColors.textSecondary, fontSize: 13, fontWeight: FontWeight.w600)),
                   const SizedBox(height: 2),
                   Text(userName,
@@ -138,60 +138,9 @@ class _HomeScreenState extends State<HomeScreen> {
               },
             ),
 
-          // Shortcut to Coach Insight Dashboard
-          GestureDetector(
-            onTap: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const CoachInsightScreen()),
-              );
-            },
-            child: Container(
-              margin: const EdgeInsets.only(bottom: 20),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-              decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: AppColors.primary.withValues(alpha: 0.15),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(Icons.insights_rounded, color: AppColors.primary, size: 20),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Athlete Intelligence Report 📊',
-                          style: TextStyle(
-                            fontSize: 13.5,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.textPrimary,
-                          ),
-                        ),
-                        Text(
-                          'วิเคราะห์ผลการนอน สภาพอากาศ และความเครียดต่อเพซ',
-                          style: TextStyle(fontSize: 11, color: AppColors.textSecondary),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Icon(Icons.chevron_right_rounded, color: AppColors.primary, size: 20),
-                ],
-              ),
-            ),
-          ),
-
           if (_loading)
             Padding(
-              padding: EdgeInsets.symmetric(vertical: 40),
+              padding: const EdgeInsets.symmetric(vertical: 40),
               child: Center(child: CircularProgressIndicator(color: AppColors.primary)),
             )
           else ...[
@@ -263,13 +212,8 @@ class _HomeScreenState extends State<HomeScreen> {
               padding: const EdgeInsets.fromLTRB(12, 16, 12, 8),
               decoration: BoxDecoration(
                 color: AppColors.surface,
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.03),
-                      blurRadius: 14,
-                      offset: const Offset(0, 4)),
-                ],
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: AppColors.divider),
               ),
               child: BarChart(
                 BarChartData(
@@ -328,104 +272,82 @@ class _HomeScreenState extends State<HomeScreen> {
 
             const SizedBox(height: 28),
 
-            // AI Coach - คำแนะนำจริงจาก Gemini
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(20),
-                gradient: LinearGradient(
-                  colors: AppColors.darkGradient,
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppColors.secondary.withValues(alpha: 0.25),
-                    blurRadius: 18,
-                    offset: const Offset(0, 6),
-                  ),
-                ],
+            // สรุปคำแนะนำวันนี้ + ทางลัดไปหน้าข้อมูลเชิงลึก รวมเป็นบล็อกเดียว
+            // (เดิมมีการ์ดแยกสามจุดที่พูดเรื่องเดียวกัน ลดให้เหลือจุดเดียวเพื่อไม่ให้ซ้ำซ้อน)
+            GestureDetector(
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const CoachInsightScreen()),
               ),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: AppColors.accent.withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(14),
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(18),
+                decoration: BoxDecoration(
+                  color: AppColors.primaryLight,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: Icon(Icons.insights_rounded, color: AppColors.primary, size: 22),
                     ),
-                    child: Icon(Icons.psychology_alt_rounded,
-                        color: AppColors.accentLight, size: 24),
-                  ),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            const Flexible(
-                              child: Text('คำแนะนำฝึกซ้อมประจำวัน',
-                                  overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.w800,
-                                      fontSize: 15)),
-                            ),
-                            if (!_coachLoading && _coach?.source == 'gemini') ...[
-                              const SizedBox(width: 6),
-                              Container(
-                                padding:
-                                    const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                                decoration: BoxDecoration(
-                                  color: AppColors.accent.withValues(alpha: 0.3),
-                                  borderRadius: BorderRadius.circular(8),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('สรุปสภาพร่างกายวันนี้',
+                              style: TextStyle(
+                                  color: AppColors.textPrimary,
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 15)),
+                          const SizedBox(height: 6),
+                          if (_coachLoading)
+                            Row(
+                              children: [
+                                SizedBox(
+                                  width: 12,
+                                  height: 12,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: AppColors.primary.withValues(alpha: 0.5),
+                                  ),
                                 ),
-                                child: Text('Gemini',
+                                const SizedBox(width: 8),
+                                Text('กำลังดูข้อมูลการวิ่งของคุณ...',
                                     style: TextStyle(
-                                        color: AppColors.accentLight,
-                                        fontSize: 9.5,
-                                        fontWeight: FontWeight.w800)),
+                                        color: AppColors.textSecondary, fontSize: 12.5)),
+                              ],
+                            )
+                          else
+                            Text(
+                              (_coach?.advice.isNotEmpty ?? false)
+                                  ? _coach!.advice
+                                  : 'ยังไม่มีคำแนะนำ ลองวิ่งดูสักครั้งแล้วกลับมาดูอีกที',
+                              style: TextStyle(
+                                color: AppColors.textPrimary.withValues(alpha: 0.85),
+                                fontSize: 13,
+                                height: 1.45,
+                                fontWeight: FontWeight.w500,
                               ),
-                            ],
-                          ],
-                        ),
-                        const SizedBox(height: 6),
-                        if (_coachLoading)
-                          Row(
-                            children: [
-                              SizedBox(
-                                width: 12,
-                                height: 12,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: Colors.white.withValues(alpha: 0.6),
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Text('กำลังวิเคราะห์ข้อมูลการวิ่งของคุณ...',
-                                  style: TextStyle(
-                                      color: Colors.white.withValues(alpha: 0.6), fontSize: 12.5)),
-                            ],
-                          )
-                        else
-                          Text(
-                            (_coach?.advice.isNotEmpty ?? false)
-                                ? _coach!.advice
-                                : 'ยังไม่มีคำแนะนำในตอนนี้ ลองวิ่งดูสักครั้งแล้วกลับมาดูอีกครั้ง',
-                            style: TextStyle(
-                              color: Colors.white.withValues(alpha: 0.9),
-                              fontSize: 13,
-                              height: 1.45,
-                              fontWeight: FontWeight.w500,
                             ),
-                          ),
-                      ],
+                          const SizedBox(height: 8),
+                          Text('ดูรายละเอียดเพิ่มเติม',
+                              style: TextStyle(
+                                  color: AppColors.primary,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700)),
+                        ],
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
 
@@ -443,10 +365,11 @@ class _HomeScreenState extends State<HomeScreen> {
                 padding: const EdgeInsets.all(22),
                 decoration: BoxDecoration(
                   color: AppColors.surface,
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: AppColors.divider),
                 ),
                 child: Center(
-                  child: Text('ยังไม่มีประวัติการวิ่ง ลองไปกดเริ่มวิ่งดูก่อนเลย! 🏃',
+                  child: Text('ยังไม่มีประวัติการวิ่ง เริ่มต้นการวิ่งครั้งแรกของคุณวันนี้',
                       style: TextStyle(color: AppColors.textSecondary, fontSize: 13, fontWeight: FontWeight.w600)),
                 ),
               )
@@ -464,13 +387,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
                       color: AppColors.surface,
-                      borderRadius: BorderRadius.circular(20),
-                      boxShadow: [
-                        BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.025),
-                            blurRadius: 10,
-                            offset: const Offset(0, 3)),
-                      ],
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: AppColors.divider),
                     ),
                     child: Row(
                       children: [

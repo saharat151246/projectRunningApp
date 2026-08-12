@@ -65,7 +65,7 @@ class _GamificationScreenState extends State<GamificationScreen> {
           child: ListView(
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 110),
             children: [
-              const Text('ภารกิจและเหรียญตรา 🏆', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800)),
+              const Text('ภารกิจและเหรียญตรา', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800)),
               const SizedBox(height: 4),
               Text('สร้างเป้าหมายของคุณ และเก็บแต้มจากทุกก้าวที่ทำสำเร็จ', style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
               const SizedBox(height: 20),

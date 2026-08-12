@@ -26,17 +26,19 @@ class DailyPlanCard extends StatelessWidget {
     }
   }
 
+  // ใช้สีจากธีมหลักของแอป (โทนชมพู) แทนสีสุ่มรายชนิดกิจกรรม
+  // เพื่อให้การ์ดนี้ยังดูเป็นส่วนหนึ่งของแอป ไม่ใช่ป้ายสีแยกออกไป
   Color _getActivityColor() {
     switch (plan.activityType) {
       case 'rest':
-        return const Color(0xFF10B981); // Green
+        return AppColors.secondary; // วันพัก - โทนเข้ม สงบ
       case 'interval':
-        return const Color(0xFFEF4444); // Red
+        return AppColors.primaryDark; // อินเทอร์วัล - ชมพูเข้ม หนักแน่น
       case 'long_run':
-        return const Color(0xFF8B5CF6); // Purple
+        return AppColors.gold; // วิ่งยาว - โทนทอง เป็นความสำเร็จ
       case 'easy_run':
       default:
-        return const Color(0xFF3B82F6); // Blue
+        return AppColors.primary; // วิ่งเบา - ชมพูหลักของแอป
     }
   }
 
@@ -49,15 +51,8 @@ class DailyPlanCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 20),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: themeColor.withValues(alpha: 0.3), width: 1.5),
-        boxShadow: [
-          BoxShadow(
-            color: themeColor.withValues(alpha: 0.08),
-            blurRadius: 16,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: themeColor.withValues(alpha: 0.3), width: 1.2),
       ),
       child: Padding(
         padding: const EdgeInsets.all(18),
@@ -80,35 +75,13 @@ class DailyPlanCard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
-                        children: [
-                          Text(
-                            'แผนซ้อมวันนี้จาก AI Coach',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.textSecondary,
-                            ),
-                          ),
-                          const SizedBox(width: 6),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: plan.source == 'gemini'
-                                  ? AppColors.primary.withValues(alpha: 0.12)
-                                  : Colors.grey.withValues(alpha: 0.15),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: Text(
-                              plan.source == 'gemini' ? '✨ Gemini AI' : 'Rule-based',
-                              style: TextStyle(
-                                fontSize: 9.5,
-                                fontWeight: FontWeight.w700,
-                                color: plan.source == 'gemini' ? AppColors.primary : AppColors.textSecondary,
-                              ),
-                            ),
-                          ),
-                        ],
+                      Text(
+                        'แผนซ้อมวันนี้',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textSecondary,
+                        ),
                       ),
                       const SizedBox(height: 2),
                       Text(
@@ -210,7 +183,7 @@ class DailyPlanCard extends StatelessWidget {
                   ),
                   icon: const Icon(Icons.chat_bubble_outline_rounded, size: 16),
                   label: const Text(
-                    'คุยปรับแผนกับ AI Coach',
+                    'คุยปรับแผนกับโค้ช',
                     style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
                   ),
                 ),

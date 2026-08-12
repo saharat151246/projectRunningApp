@@ -162,8 +162,8 @@ class _StatLine extends StatelessWidget {
 }
 
 class _BrandMark extends StatelessWidget {
-  final Color textColor;
-  const _BrandMark({this.textColor = Colors.white});
+  final Color? textColor;
+  const _BrandMark({this.textColor});
 
   @override
   Widget build(BuildContext context) {
@@ -178,12 +178,12 @@ class _BrandMark extends StatelessWidget {
             borderRadius: BorderRadius.circular(5),
           ),
           alignment: Alignment.center,
-          child: const Text('🏃', style: TextStyle(fontSize: 11)),
+          child: const Icon(Icons.directions_run_rounded, size: 12, color: Colors.white),
         ),
         const SizedBox(width: 6),
         Text('RunMate',
             style: TextStyle(
-                color: textColor, fontSize: 14, fontWeight: FontWeight.w800, letterSpacing: 0.3)),
+                color: textColor ?? Colors.white, fontSize: 14, fontWeight: FontWeight.w800, letterSpacing: 0.3)),
       ],
     );
   }

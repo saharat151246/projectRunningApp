@@ -155,28 +155,30 @@ class AppTheme {
         style: ElevatedButton.styleFrom(
           backgroundColor: p.primary,
           foregroundColor: Colors.white,
-          minimumSize: const Size.fromHeight(52),
+          minimumSize: const Size.fromHeight(50),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(14),
           ),
           textStyle: const TextStyle(
-            fontSize: 16,
+            fontSize: 15,
             fontWeight: FontWeight.w700,
+            letterSpacing: 0.2,
           ),
           elevation: 0,
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
-          minimumSize: const Size.fromHeight(52),
-          side: BorderSide(color: p.divider, width: 1.5),
+          minimumSize: const Size.fromHeight(50),
+          side: BorderSide(color: p.divider, width: 1.2),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(14),
           ),
           foregroundColor: p.textPrimary,
           textStyle: const TextStyle(
             fontSize: 15,
             fontWeight: FontWeight.w700,
+            letterSpacing: 0.2,
           ),
         ),
       ),
@@ -184,18 +186,18 @@ class AppTheme {
         filled: true,
         fillColor: p.surface,
         contentPadding:
-            const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: BorderRadius.circular(14),
           borderSide: BorderSide(color: p.divider),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: BorderRadius.circular(14),
           borderSide: BorderSide(color: p.divider),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(18),
-          borderSide: BorderSide(color: p.primary, width: 1.8),
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide(color: p.primary, width: 1.5),
         ),
       ),
     );

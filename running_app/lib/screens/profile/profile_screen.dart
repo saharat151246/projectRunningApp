@@ -101,7 +101,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     children: [
                       UserAvatar(avatarUrl: selectedAvatar, size: 72, iconSize: 36),
                       const SizedBox(height: 8),
-                      Text('เลือกรูปโปรไฟล์ 🎨', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.textSecondary)),
+                      Text('เลือกรูปโปรไฟล์', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.textSecondary)),
                     ],
                   ),
                 ),
@@ -304,7 +304,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 _saveProfilePrefs();
                 Navigator.pop(ctx);
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('อัปเดตเป้าหมายเป็น $km กม./สัปดาห์ เรียบร้อยแล้ว 🎯')),
+                  SnackBar(content: Text('อัปเดตเป้าหมายเป็น $km กม./สัปดาห์ เรียบร้อยแล้ว')),
                 );
               }
             },
@@ -360,7 +360,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 const SizedBox(height: 16),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 12),
-                  child: Text('โหมดการแสดงผล 🌗',
+                  child: Text('โหมดการแสดงผล',
                       style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
                 ),
                 const SizedBox(height: 12),
@@ -400,7 +400,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ),
               const SizedBox(height: 16),
-              const Text('ตั้งค่าการแจ้งเตือน 🔔',
+              const Text('ตั้งค่าการแจ้งเตือน',
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               const SizedBox(height: 6),
               Text('จัดการการแจ้งเตือนและเตือนซ้อมวิ่งเพื่อรักษาวินัย',
@@ -457,16 +457,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
         title: Row(
           children: [
             Icon(Icons.privacy_tip_outlined, color: AppColors.primary),
-            SizedBox(width: 8),
-            Text('ความเป็นส่วนตัว 🛡️', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const SizedBox(width: 8),
+            const Text('ความเป็นส่วนตัว', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
           ],
         ),
         content: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('การปกป้องข้อมูลของคุณ', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-              SizedBox(height: 6),
+              const Text('การปกป้องข้อมูลของคุณ', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+              const SizedBox(height: 6),
               Text(
                 '• ข้อมูลพิกัด GPS ทั้งหมดของคุณจะถูกใช้ประมวลผลเส้นทางวิ่งเท่านั้น และถูกเข้ารหัสอย่างปลอดภัย\n'
                 '• รหัสผ่านและ JWT Token ถูกเก็บบน Flutter Secure Storage ของอุปกรณ์อย่างปลอดภัย\n'
@@ -519,10 +519,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 children: [
                   ExpansionTile(
                     leading: Icon(Icons.gps_fixed_rounded, color: AppColors.primary),
-                    title: Text('📍 การบันทึก GPS ไม่ตรงทำอย่างไร?', style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600)),
+                    title: const Text('การบันทึก GPS ไม่ตรงทำอย่างไร?', style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600)),
                     children: [
                       Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                         child: Text(
                           'ตรวจสอบให้แน่ใจว่าได้เปิด Location Service แบบความแม่นยำสูง (High Accuracy) และอนุญาตสิทธิ์ตำแหน่งแบบ "ขณะใช้แอป" หรือ "ตลอดเวลา"',
                           style: TextStyle(fontSize: 12.5, color: AppColors.textSecondary, height: 1.4),
@@ -532,10 +532,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                   ExpansionTile(
                     leading: Icon(Icons.psychology_alt_rounded, color: AppColors.accent),
-                    title: Text('🤖 AI Coach ประเมินความเสี่ยงอย่างไร?', style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600)),
+                    title: const Text('การประเมินความเสี่ยงจาก AI Coach', style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600)),
                     children: [
                       Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                         child: Text(
                           'AI Coach วิเคราะห์จากกฎความปลอดภัย 10% (ระยะทางสัปดาห์นี้เทียบกับสัปดาห์ก่อน) ร่วมกับข้อมูลความรู้สึกเหนื่อยล้าที่คุณเช็คอินหลังวิ่ง',
                           style: TextStyle(fontSize: 12.5, color: AppColors.textSecondary, height: 1.4),
@@ -545,10 +545,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                   ExpansionTile(
                     leading: Icon(Icons.military_tech_rounded, color: AppColors.gold),
-                    title: Text('🏆 แต้มและเหรียญตราได้มาจากไหน?', style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600)),
+                    title: const Text('การสะสมแต้มและเหรียญตรา', style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600)),
                     children: [
                       Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                         child: Text(
                           'ได้ 10 แต้มต่อระยะทางวิ่ง 1 กม., +50 แต้มเมื่อปลดล็อกเหรียญตราใหม่ และได้แต้มโบนัสเมื่อทำภารกิจรายสัปดาห์สำเร็จ',
                           style: TextStyle(fontSize: 12.5, color: AppColors.textSecondary, height: 1.4),

@@ -47,18 +47,11 @@ class OvertrainingWarningCard extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: const Color(0xFFFF4D4F).withValues(alpha: 0.35),
-          width: 1.5,
+          color: const Color(0xFFFF4D4F).withValues(alpha: 0.3),
+          width: 1.2,
         ),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFFFF4D4F).withValues(alpha: 0.08),
-            blurRadius: 16,
-            offset: const Offset(0, 4),
-          ),
-        ],
       ),
       child: Padding(
         padding: const EdgeInsets.all(18),
@@ -84,7 +77,7 @@ class OvertrainingWarningCard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
+                      const Text(
                         'ความเสี่ยงบาดเจ็บสูง (Overtraining)',
                         style: TextStyle(
                           fontSize: 15,
@@ -92,7 +85,7 @@ class OvertrainingWarningCard extends StatelessWidget {
                           color: Color(0xFFC01C1C),
                         ),
                       ),
-                      SizedBox(height: 2),
+                      const SizedBox(height: 2),
                       Text(
                         'คำเตือนด้านสุขภาพและการฝึกซ้อม',
                         style: TextStyle(

@@ -77,7 +77,7 @@ class _MoodCheckinScreenState extends State<MoodCheckinScreen> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'วันนี้รู้สึกยังไงบ้าง? 💭',
+                      'วันนี้รู้สึกอย่างไร?',
                       style: TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.w800,
@@ -138,7 +138,7 @@ class _MoodCheckinScreenState extends State<MoodCheckinScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text('💤 ชั่วโมงนอนเมื่อคืน (ไม่บังคับ)',
+                        const Text('ชั่วโมงนอนเมื่อคืน (ไม่บังคับ)',
                             style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5)),
                         if (_sleepHours != null)
                           Text('${_sleepHours!.toStringAsFixed(1)} ชม.',
@@ -163,7 +163,7 @@ class _MoodCheckinScreenState extends State<MoodCheckinScreen> {
                     const SizedBox(height: 20),
 
                     // 🧘 ระดับความเครียด
-                    const Text('🧘 ระดับความเครียดวันนี้',
+                    const Text('ระดับความเครียดวันนี้',
                         style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5)),
                     const SizedBox(height: 10),
                     Row(
@@ -179,7 +179,7 @@ class _MoodCheckinScreenState extends State<MoodCheckinScreen> {
                     const SizedBox(height: 20),
 
                     // 🌤️ สภาพอากาศ
-                    const Text('🌤️ สภาพอากาศขณะวิ่ง',
+                    const Text('สภาพอากาศขณะวิ่ง',
                         style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5)),
                     const SizedBox(height: 10),
                     Wrap(
