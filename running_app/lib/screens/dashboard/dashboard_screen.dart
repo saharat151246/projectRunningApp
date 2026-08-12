@@ -202,56 +202,123 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _runTile(RunItem run) {
-    return GestureDetector(
-      onTap: () {
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (_) => RunDetailScreen(runId: run.id),
+    return Dismissible(
+      key: Key(run.id),
+      direction: DismissDirection.endToStart,
+      confirmDismiss: (direction) async {
+        return await showDialog<bool>(
+          context: context,
+          builder: (dialogContext) => AlertDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            title: const Row(
+              children: [
+                Icon(Icons.delete_outline_rounded, color: Color(0xFFE82A2A)),
+                SizedBox(width: 8),
+                Text('ลบประวัติการวิ่ง', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              ],
+            ),
+            content: const Text(
+              'คุณต้องการลบรายการวิ่งนี้ใช่หรือไม่? ข้อมูลประวัติและสถิติของกิจกรรมนี้จะถูกลบออกจากระบบและไม่สามารถกู้คืนได้',
+              style: TextStyle(fontSize: 14, height: 1.4),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(dialogContext, false),
+                child: Text('ยกเลิก', style: TextStyle(color: AppColors.textSecondary)),
+              ),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFE82A2A),
+                  foregroundColor: Colors.white,
+                  minimumSize: const Size(100, 44),
+                ),
+                onPressed: () => Navigator.pop(dialogContext, true),
+                child: const Text('ลบรายการ'),
+              ),
+            ],
           ),
         );
       },
-      child: Container(
+      onDismissed: (_) async {
+        final result = await RunService.instance.deleteRun(run.id);
+        if (mounted) {
+          if (result.success) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('ลบประวัติการวิ่งเรียบร้อยแล้ว')),
+            );
+            _load();
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(result.errorMessage ?? 'ไม่สามารถลบรายการได้')),
+            );
+            _load();
+          }
+        }
+      },
+      background: Container(
         margin: const EdgeInsets.only(bottom: 10),
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.only(right: 20),
+        alignment: Alignment.centerRight,
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: const Color(0xFFE82A2A),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.divider),
         ),
-        child: Row(
-          children: [
-            Container(
-              width: 46,
-              height: 46,
-              decoration: BoxDecoration(
-                color: AppColors.primaryLight,
-                borderRadius: BorderRadius.circular(14),
-              ),
-              child: Icon(Icons.directions_run_rounded,
-                  color: AppColors.primary, size: 22),
+        child: const Icon(Icons.delete_outline_rounded, color: Colors.white, size: 24),
+      ),
+      child: GestureDetector(
+        onTap: () async {
+          final deleted = await Navigator.of(context).push<bool>(
+            MaterialPageRoute(
+              builder: (_) => RunDetailScreen(runId: run.id),
             ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(_formatDate(run.startTime),
-                      style: const TextStyle(
-                          fontWeight: FontWeight.w800, fontSize: 14.5)),
-                  const SizedBox(height: 4),
-                  Text(
-                    '${run.distanceKm.toStringAsFixed(2)} กม. • ${_formatDuration(run.durationSec)} • ${_formatPace(run.avgPace)}',
-                    style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.textSecondary),
-                  ),
-                ],
+          );
+          if (deleted == true && mounted) {
+            _load();
+          }
+        },
+        child: Container(
+          margin: const EdgeInsets.only(bottom: 10),
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: AppColors.divider),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 46,
+                height: 46,
+                decoration: BoxDecoration(
+                  color: AppColors.primaryLight,
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Icon(Icons.directions_run_rounded,
+                    color: AppColors.primary, size: 22),
               ),
-            ),
-            Icon(Icons.chevron_right_rounded,
-                color: AppColors.textSecondary, size: 22),
-          ],
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(_formatDate(run.startTime),
+                        style: const TextStyle(
+                            fontWeight: FontWeight.w800, fontSize: 14.5)),
+                    const SizedBox(height: 4),
+                    Text(
+                      '${run.distanceKm.toStringAsFixed(2)} กม. • ${_formatDuration(run.durationSec)} • ${_formatPace(run.avgPace)}',
+                      style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textSecondary),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(Icons.chevron_right_rounded,
+                  color: AppColors.textSecondary, size: 22),
+            ],
+          ),
         ),
       ),
     );

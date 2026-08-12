@@ -129,6 +129,60 @@ ${routeUrl.isEmpty ? '' : '\nดูเส้นทาง: $routeUrl\n'}
     );
   }
 
+  Future<void> _confirmDeleteRun(BuildContext context) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Row(
+          children: [
+            Icon(Icons.delete_outline_rounded, color: Color(0xFFE82A2A)),
+            SizedBox(width: 8),
+            Text('ลบประวัติการวิ่ง', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          ],
+        ),
+        content: const Text(
+          'คุณต้องการลบรายการวิ่งนี้ใช่หรือไม่? ข้อมูลประวัติและสถิติของกิจกรรมนี้จะถูกลบออกจากระบบและไม่สามารถกู้คืนได้',
+          style: TextStyle(fontSize: 14, height: 1.4),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: Text('ยกเลิก', style: TextStyle(color: AppColors.textSecondary)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFE82A2A),
+              foregroundColor: Colors.white,
+              minimumSize: const Size(100, 44),
+            ),
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('ลบรายการ'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true || !mounted) return;
+
+    final messenger = ScaffoldMessenger.of(context);
+    final nav = Navigator.of(context);
+    final result = await RunService.instance.deleteRun(widget.runId);
+    if (!mounted) return;
+
+    if (result.success) {
+      messenger.showSnackBar(
+        const SnackBar(content: Text('ลบประวัติการวิ่งเรียบร้อยแล้ว')),
+      );
+      nav.pop(true);
+    } else {
+      messenger.showSnackBar(
+        SnackBar(content: Text(result.errorMessage ?? 'ไม่สามารถลบรายการได้')),
+      );
+    }
+  }
+
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -137,12 +191,18 @@ ${routeUrl.isEmpty ? '' : '\nดูเส้นทาง: $routeUrl\n'}
         backgroundColor: AppColors.background,
         title: const Text('รายละเอียดการวิ่ง'),
         actions: [
-          if (_detail != null)
+          if (_detail != null) ...[
             IconButton(
               onPressed: () => _shareRun(context, _detail!),
               icon: const Icon(Icons.ios_share_rounded),
               tooltip: 'แชร์ผลการวิ่ง',
             ),
+            IconButton(
+              onPressed: () => _confirmDeleteRun(context),
+              icon: const Icon(Icons.delete_outline_rounded, color: Color(0xFFE82A2A)),
+              tooltip: 'ลบประวัติการวิ่ง',
+            ),
+          ],
         ],
       ),
       body: _loading
@@ -355,6 +415,17 @@ ${routeUrl.isEmpty ? '' : '\nดูเส้นทาง: $routeUrl\n'}
                   onPressed: () => _shareRun(context, run),
                   icon: const Icon(Icons.share_rounded),
                   label: const Text('แชร์การ์ดผลการวิ่ง'),
+                ),
+              ),
+
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: TextButton.icon(
+                  onPressed: () => _confirmDeleteRun(context),
+                  icon: const Icon(Icons.delete_outline_rounded, color: Color(0xFFE82A2A), size: 20),
+                  label: const Text('ลบประวัติการวิ่งนี้',
+                      style: TextStyle(color: Color(0xFFE82A2A), fontWeight: FontWeight.w600)),
                 ),
               ),
 

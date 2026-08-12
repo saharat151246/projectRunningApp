@@ -171,4 +171,27 @@ class RunService {
       return null;
     }
   }
+
+  /// ลบประวัติการวิ่งตาม runId
+  Future<RunApiResult> deleteRun(String runId) async {
+    try {
+      final res = await http
+          .delete(
+            Uri.parse('${ApiConfig.baseUrl}/runs/$runId'),
+            headers: _authHeaders,
+          )
+          .timeout(const Duration(seconds: 15));
+
+      if (res.statusCode == 200 || res.statusCode == 204) {
+        return RunApiResult(success: true, runId: runId);
+      }
+      final data = jsonDecode(res.body) as Map<String, dynamic>;
+      return RunApiResult(
+        success: false,
+        errorMessage: data['message']?.toString() ?? 'ไม่สามารถลบรายการได้',
+      );
+    } catch (e) {
+      return RunApiResult(success: false, errorMessage: 'การเชื่อมต่อขัดข้อง: $e');
+    }
+  }
 }

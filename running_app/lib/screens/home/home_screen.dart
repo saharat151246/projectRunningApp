@@ -375,12 +375,16 @@ class _HomeScreenState extends State<HomeScreen> {
               )
             else
               ..._recentRuns.map((run) => GestureDetector(
-                    onTap: () {
-                      Navigator.of(context).push(
+                    onTap: () async {
+                      final deleted = await Navigator.of(context).push<bool>(
                         MaterialPageRoute(
                           builder: (_) => RunDetailScreen(runId: run.id),
                         ),
                       );
+                      if (deleted == true && mounted) {
+                        _load();
+                        _loadCoach();
+                      }
                     },
                     child: Container(
                     margin: const EdgeInsets.only(bottom: 10),
