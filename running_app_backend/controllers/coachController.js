@@ -150,9 +150,32 @@ async function callGeminiChat({ history, message, statsSummary }) {
   return text.trim();
 }
 
+// In-Memory Cache Store (Key: userId_YYYY-MM-DD)
+const coachAdviceCache = new Map();
+const dailyPlanCache = new Map();
+const insightsCache = new Map();
+
+function getTodayKey(userId) {
+  const today = new Date().toISOString().split('T')[0];
+  return `${userId}_${today}`;
+}
+
+exports.clearCoachCache = (userId) => {
+  if (!userId) return;
+  const todayKey = getTodayKey(userId);
+  coachAdviceCache.delete(todayKey);
+  dailyPlanCache.delete(todayKey);
+  insightsCache.delete(todayKey);
+};
+
 // GET /api/coach  (ต้อง login ก่อน)
 exports.getCoachAdvice = async (req, res) => {
   try {
+    const cacheKey = getTodayKey(req.userId);
+    if (coachAdviceCache.has(cacheKey)) {
+      return res.json({ ...coachAdviceCache.get(cacheKey), cached: true });
+    }
+
     const runs = await Run.find({ user_id: req.userId }).select(
       'distance_km duration_sec start_time mood note sleep_hours stress_level weather'
     );
@@ -160,12 +183,16 @@ exports.getCoachAdvice = async (req, res) => {
     const { stats, promptSummary, fallbackMessage } = buildCoachContext(runs);
 
     if (stats.totalRuns === 0) {
-      return res.json({ advice: fallbackMessage, stats, source: 'rule-based' });
+      const responseData = { advice: fallbackMessage, stats, source: 'rule-based' };
+      coachAdviceCache.set(cacheKey, responseData);
+      return res.json(responseData);
     }
 
     try {
       const advice = await callGemini(promptSummary);
-      return res.json({ advice, stats, source: 'gemini' });
+      const responseData = { advice, stats, source: 'gemini' };
+      coachAdviceCache.set(cacheKey, responseData);
+      return res.json(responseData);
     } catch (aiErr) {
       console.warn('Gemini call failed, falling back to rule-based:', aiErr.message);
       return res.json({ advice: fallbackMessage, stats, source: 'rule-based' });
@@ -179,6 +206,11 @@ exports.getCoachAdvice = async (req, res) => {
 // GET /api/coach/daily-plan (สร้างแผนซ้อมรายวันตามสถิติและ recovery)
 exports.getDailyPlan = async (req, res) => {
   try {
+    const cacheKey = getTodayKey(req.userId);
+    if (dailyPlanCache.has(cacheKey)) {
+      return res.json({ ...dailyPlanCache.get(cacheKey), cached: true });
+    }
+
     const runs = await Run.find({ user_id: req.userId }).select(
       'distance_km duration_sec start_time mood note sleep_hours stress_level weather'
     );
@@ -187,7 +219,9 @@ exports.getDailyPlan = async (req, res) => {
 
     try {
       const plan = await callGeminiDailyPlan(promptSummary);
-      return res.json({ plan, stats, source: 'gemini' });
+      const responseData = { plan, stats, source: 'gemini' };
+      dailyPlanCache.set(cacheKey, responseData);
+      return res.json(responseData);
     } catch (aiErr) {
       console.warn('Gemini daily plan failed, using fallback:', aiErr.message);
       const fallbackPlan = buildFallbackDailyPlan(stats);
@@ -237,6 +271,11 @@ async function callGeminiInsights(insightsSummary) {
 // GET /api/coach/insights (ดึงผลวิเคราะห์เชิงลึกระยะยาว)
 exports.getInsights = async (req, res) => {
   try {
+    const cacheKey = getTodayKey(req.userId);
+    if (insightsCache.has(cacheKey)) {
+      return res.json({ ...insightsCache.get(cacheKey), cached: true });
+    }
+
     const runs = await Run.find({ user_id: req.userId }).select(
       'distance_km duration_sec avg_pace start_time mood note sleep_hours stress_level weather'
     );
@@ -256,10 +295,12 @@ exports.getInsights = async (req, res) => {
       }
     }
 
-    return res.json({
+    const responseData = {
       insights,
       summary: summaryText,
-    });
+    };
+    insightsCache.set(cacheKey, responseData);
+    return res.json(responseData);
   } catch (err) {
     console.error('getInsights error:', err);
     res.status(500).json({ message: 'เกิดข้อผิดพลาดฝั่งเซิร์ฟเวอร์' });

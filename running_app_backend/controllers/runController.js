@@ -1,4 +1,5 @@
 const Run = require('../models/Run');
+const { clearCoachCache } = require('./coachController');
 const { MOOD_VALUES } = Run;
 
 // POST /api/runs
@@ -20,6 +21,7 @@ exports.createRun = async (req, res) => {
       route: route || [],
     });
 
+    clearCoachCache(req.userId);
     res.status(201).json({ run });
   } catch (err) {
     console.error('createRun error:', err);
@@ -141,6 +143,7 @@ exports.updateRun = async (req, res) => {
       return res.status(404).json({ message: 'ไม่พบข้อมูลการวิ่งนี้' });
     }
 
+    clearCoachCache(req.userId);
     res.json({ run });
   } catch (err) {
     console.error('updateRun error:', err);

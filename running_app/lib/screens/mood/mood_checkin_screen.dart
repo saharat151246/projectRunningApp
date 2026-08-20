@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/primary_button.dart';
 import '../../services/run_service.dart';
+import '../../services/coach_service.dart';
 
 /// หน้าเช็คอินความรู้สึกหลังวิ่งเสร็จ - ออกแบบตามหลัก UI App Design Skill
 /// ธีม: Modern Blush Pink & Warm Charcoal (human-made feel, มินิมอล, ไม่เป็น AI เทมเพลต)
@@ -58,6 +59,7 @@ class _MoodCheckinScreenState extends State<MoodCheckinScreen> {
       stressLevel: _stressLevel,
       weather: _weather,
     );
+    CoachService.instance.clearMemoryCache();
     if (!mounted) return;
     setState(() => _saving = false);
     Navigator.of(context).pop();

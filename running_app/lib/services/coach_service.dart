@@ -19,52 +19,84 @@ class CoachService {
   CoachService._();
   static final CoachService instance = CoachService._();
 
+  CoachAdvice? _cachedAdvice;
+  DailyPlanItem? _cachedDailyPlan;
+  CoachInsightReport? _cachedInsights;
+
+  /// สั่งล้าง Memory Cache ในเครื่อง (เมื่อเช็คอิน หรือมีวิ่งใหม่)
+  void clearMemoryCache() {
+    _cachedAdvice = null;
+    _cachedDailyPlan = null;
+    _cachedInsights = null;
+  }
+
+  /// โหลดข้อมูล AI Coach ล่วงหน้าเงียบๆ ใน Background
+  Future<void> prefetch() async {
+    fetchDailyPlan();
+    fetchAdvice();
+  }
+
   Map<String, String> get _authHeaders => {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer ${AuthService.instance.token}',
       };
 
-  Future<CoachAdvice> fetchAdvice() async {
+  Future<CoachAdvice> fetchAdvice({bool forceRefresh = false}) async {
+    if (!forceRefresh && _cachedAdvice != null) {
+      return _cachedAdvice!;
+    }
     try {
       final res = await http.get(
         Uri.parse('${ApiConfig.baseUrl}/coach'),
         headers: _authHeaders,
       ).timeout(const Duration(seconds: 20)); // Gemini อาจใช้เวลานานกว่า endpoint อื่นเล็กน้อย
 
-      if (res.statusCode != 200) return CoachAdvice.empty();
-      return CoachAdvice.fromJson(jsonDecode(res.body) as Map<String, dynamic>);
+      if (res.statusCode != 200) return _cachedAdvice ?? CoachAdvice.empty();
+      final advice = CoachAdvice.fromJson(jsonDecode(res.body) as Map<String, dynamic>);
+      _cachedAdvice = advice;
+      return advice;
     } catch (_) {
-      return CoachAdvice.empty();
+      return _cachedAdvice ?? CoachAdvice.empty();
     }
   }
 
   /// ดึงแผนซ้อมประจำวันจาก AI Coach
-  Future<DailyPlanItem> fetchDailyPlan() async {
+  Future<DailyPlanItem> fetchDailyPlan({bool forceRefresh = false}) async {
+    if (!forceRefresh && _cachedDailyPlan != null) {
+      return _cachedDailyPlan!;
+    }
     try {
       final res = await http.get(
         Uri.parse('${ApiConfig.baseUrl}/coach/daily-plan'),
         headers: _authHeaders,
       ).timeout(const Duration(seconds: 20));
 
-      if (res.statusCode != 200) return DailyPlanItem.empty();
-      return DailyPlanItem.fromJson(jsonDecode(res.body) as Map<String, dynamic>);
+      if (res.statusCode != 200) return _cachedDailyPlan ?? DailyPlanItem.empty();
+      final plan = DailyPlanItem.fromJson(jsonDecode(res.body) as Map<String, dynamic>);
+      _cachedDailyPlan = plan;
+      return plan;
     } catch (_) {
-      return DailyPlanItem.empty();
+      return _cachedDailyPlan ?? DailyPlanItem.empty();
     }
   }
 
   /// ดึงข้อมูลวิเคราะห์เชิงลึกระยะยาว (Sleep/Stress vs Pace correlation)
-  Future<CoachInsightReport> fetchInsights() async {
+  Future<CoachInsightReport> fetchInsights({bool forceRefresh = false}) async {
+    if (!forceRefresh && _cachedInsights != null) {
+      return _cachedInsights!;
+    }
     try {
       final res = await http.get(
         Uri.parse('${ApiConfig.baseUrl}/coach/insights'),
         headers: _authHeaders,
       ).timeout(const Duration(seconds: 20));
 
-      if (res.statusCode != 200) return CoachInsightReport.empty();
-      return CoachInsightReport.fromJson(jsonDecode(res.body) as Map<String, dynamic>);
+      if (res.statusCode != 200) return _cachedInsights ?? CoachInsightReport.empty();
+      final insights = CoachInsightReport.fromJson(jsonDecode(res.body) as Map<String, dynamic>);
+      _cachedInsights = insights;
+      return insights;
     } catch (_) {
-      return CoachInsightReport.empty();
+      return _cachedInsights ?? CoachInsightReport.empty();
     }
   }
 
