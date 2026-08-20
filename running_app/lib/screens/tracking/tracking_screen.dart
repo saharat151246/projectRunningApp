@@ -48,6 +48,9 @@ class _TrackingScreenState extends State<TrackingScreen> {
   int _seconds = 0;
   bool _isRunning = false;
   bool _isPaused = false;
+  bool _isCountingDown = false;
+  int _countdownNumber = 3;
+  Timer? _countdownTimer;
   DateTime?
       _runStartTime; // เวลาเริ่มวิ่งจริง (ตั้งครั้งเดียวตอนกดเริ่ม ไม่ถูกรีเซ็ตตอน resume)
 
@@ -156,8 +159,33 @@ class _TrackingScreenState extends State<TrackingScreen> {
         (_coachAdvice!.overtrainingRisk || _coachAdvice!.fatigueSignal)) {
       _showOvertrainingDialog();
     } else {
-      _start();
+      _startCountdown();
     }
+  }
+
+  void _startCountdown() {
+    if (_isCountingDown) return;
+    _countdownTimer?.cancel();
+    setState(() {
+      _isCountingDown = true;
+      _countdownNumber = 3;
+    });
+
+    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+      if (_countdownNumber > 1) {
+        setState(() => _countdownNumber--);
+      } else if (_countdownNumber == 1) {
+        setState(() => _countdownNumber = 0);
+      } else {
+        timer.cancel();
+        setState(() => _isCountingDown = false);
+        _start();
+      }
+    });
   }
 
   void _showOvertrainingDialog() {
@@ -225,7 +253,7 @@ class _TrackingScreenState extends State<TrackingScreen> {
             ),
             onPressed: () {
               Navigator.pop(ctx);
-              _start();
+              _startCountdown();
             },
             child: const Text('รับทราบและเริ่มวิ่ง'),
           ),
@@ -502,6 +530,7 @@ class _TrackingScreenState extends State<TrackingScreen> {
   void dispose() {
     _secondTimer?.cancel();
     _positionStream?.cancel();
+    _countdownTimer?.cancel();
     _mapController.dispose();
     _sheetController.dispose();
     _secondsNotifier.dispose();
@@ -562,6 +591,46 @@ class _TrackingScreenState extends State<TrackingScreen> {
               child: const MapTokenWarning(),
             ),
           _buildStageSheet(topInset, bottomInset, screenHeight),
+          Positioned.fill(
+            child: IgnorePointer(
+              ignoring: !_isCountingDown,
+              child: AnimatedOpacity(
+                opacity: _isCountingDown ? 1.0 : 0.0,
+                duration: const Duration(milliseconds: 150),
+                child: _buildCountdownOverlay(),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCountdownOverlay() {
+    final text = _countdownNumber > 0 ? '$_countdownNumber' : 'เริ่ม!';
+    return Container(
+      color: Colors.black.withValues(alpha: 0.85),
+      alignment: Alignment.center,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            text,
+            style: TextStyle(
+              color: _countdownNumber > 0 ? AppColors.primary : AppColors.gold,
+              fontSize: _countdownNumber > 0 ? 100 : 72,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            _countdownNumber > 0 ? 'เตรียมตัว...' : 'ลุยเลย!',
+            style: const TextStyle(
+              color: Colors.white70,
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
         ],
       ),
     );
@@ -697,6 +766,7 @@ class _TrackingScreenState extends State<TrackingScreen> {
         return false;
       },
       child: DraggableScrollableSheet(
+        key: const PageStorageKey('stage_sheet'),
         controller: _sheetController,
         initialChildSize: _peekSize,
         minChildSize: _peekSize,
@@ -757,7 +827,9 @@ class _TrackingScreenState extends State<TrackingScreen> {
                         distanceKm: distanceMeters / 1000,
                         currentSplitPaceMinPerKm: currentSplitPace,
                         completedSplitPaces: splits,
+                        isRunning: _isRunning,
                         isPaused: _isPaused,
+                        onStart: _onStartPressed,
                         onPauseResume: _pauseResume,
                         onStop: _stop,
                         onCollapse: _collapseSheet,
@@ -928,7 +1000,9 @@ class RunStatsView extends StatelessWidget {
   /// เพซเฉลี่ยของแต่ละกม.ที่วิ่งจบไปแล้ว (นาที/กม.) เรียงจากกม.แรกสุด
   final List<double> completedSplitPaces;
 
+  final bool isRunning;
   final bool isPaused;
+  final VoidCallback? onStart;
   final VoidCallback onPauseResume;
   final VoidCallback onStop;
   final VoidCallback onCollapse;
@@ -942,7 +1016,9 @@ class RunStatsView extends StatelessWidget {
     required this.distanceKm,
     required this.currentSplitPaceMinPerKm,
     required this.completedSplitPaces,
+    this.isRunning = true,
     required this.isPaused,
+    this.onStart,
     required this.onPauseResume,
     required this.onStop,
     required this.onCollapse,
@@ -1159,6 +1235,28 @@ class RunStatsView extends StatelessWidget {
   }
 
   Widget _buildBottomControls(BuildContext context) {
+    String label;
+    IconData icon;
+    Color buttonColor;
+    VoidCallback action;
+
+    if (!isRunning) {
+      label = 'เริ่มวิ่ง';
+      icon = Icons.play_arrow_rounded;
+      buttonColor = const Color(0xFFFF7A1A);
+      action = onStart ?? onPauseResume;
+    } else if (isPaused) {
+      label = 'ไปต่อ';
+      icon = Icons.play_arrow_rounded;
+      buttonColor = AppColors.accent;
+      action = onPauseResume;
+    } else {
+      label = 'หยุดชั่วคราว';
+      icon = Icons.pause_rounded;
+      buttonColor = const Color(0xFFFF7A1A);
+      action = onPauseResume;
+    }
+
     return Container(
       width: double.infinity,
       padding: EdgeInsets.fromLTRB(
@@ -1191,10 +1289,9 @@ class RunStatsView extends StatelessWidget {
                 child: SizedBox(
                   height: 54,
                   child: ElevatedButton(
-                    onPressed: onPauseResume,
+                    onPressed: action,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor:
-                          isPaused ? AppColors.accent : const Color(0xFFFF7A1A),
+                      backgroundColor: buttonColor,
                       foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(27),
@@ -1204,12 +1301,10 @@ class RunStatsView extends StatelessWidget {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(isPaused
-                            ? Icons.play_arrow_rounded
-                            : Icons.pause_rounded),
+                        Icon(icon),
                         const SizedBox(width: 8),
                         Text(
-                          isPaused ? 'ไปต่อ' : 'หยุดชั่วคราว',
+                          label,
                           style: const TextStyle(
                               fontSize: 16, fontWeight: FontWeight.w800),
                         ),
@@ -1218,22 +1313,24 @@ class RunStatsView extends StatelessWidget {
                   ),
                 ),
               ),
-              const SizedBox(width: 12),
-              SizedBox(
-                height: 54,
-                width: 54,
-                child: OutlinedButton(
-                  onPressed: onStop,
-                  style: OutlinedButton.styleFrom(
-                    padding: EdgeInsets.zero,
-                    side:
-                        BorderSide(color: Colors.white.withValues(alpha: 0.25)),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(27)),
+              if (isRunning) ...[
+                const SizedBox(width: 12),
+                SizedBox(
+                  height: 54,
+                  width: 54,
+                  child: OutlinedButton(
+                    onPressed: onStop,
+                    style: OutlinedButton.styleFrom(
+                      padding: EdgeInsets.zero,
+                      side: BorderSide(
+                          color: Colors.white.withValues(alpha: 0.25)),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(27)),
+                    ),
+                    child: const Icon(Icons.stop_rounded, color: Colors.white),
                   ),
-                  child: const Icon(Icons.stop_rounded, color: Colors.white),
                 ),
-              ),
+              ],
             ],
           ),
         ],

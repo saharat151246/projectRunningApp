@@ -19,7 +19,9 @@ class RunStatsView extends StatelessWidget {
   /// เพซเฉลี่ยของแต่ละกม.ที่วิ่งจบไปแล้ว (นาที/กม.) เรียงจากกม.แรกสุด
   final List<double> completedSplitPaces;
 
+  final bool isRunning;
   final bool isPaused;
+  final VoidCallback? onStart;
   final VoidCallback onPauseResume;
   final VoidCallback onStop;
   final VoidCallback onCollapse;
@@ -30,7 +32,9 @@ class RunStatsView extends StatelessWidget {
     required this.distanceKm,
     required this.currentSplitPaceMinPerKm,
     required this.completedSplitPaces,
+    this.isRunning = true,
     required this.isPaused,
+    this.onStart,
     required this.onPauseResume,
     required this.onStop,
     required this.onCollapse,
@@ -250,6 +254,28 @@ class RunStatsView extends StatelessWidget {
   }
 
   Widget _buildBottomControls(BuildContext context) {
+    String label;
+    IconData icon;
+    Color buttonColor;
+    VoidCallback action;
+
+    if (!isRunning) {
+      label = 'เริ่มวิ่ง';
+      icon = Icons.play_arrow_rounded;
+      buttonColor = const Color(0xFFFF7A1A);
+      action = onStart ?? onPauseResume;
+    } else if (isPaused) {
+      label = 'ไปต่อ';
+      icon = Icons.play_arrow_rounded;
+      buttonColor = AppColors.accent;
+      action = onPauseResume;
+    } else {
+      label = 'หยุดชั่วคราว';
+      icon = Icons.pause_rounded;
+      buttonColor = const Color(0xFFFF7A1A);
+      action = onPauseResume;
+    }
+
     return Container(
       width: double.infinity,
       padding: EdgeInsets.fromLTRB(
@@ -282,10 +308,9 @@ class RunStatsView extends StatelessWidget {
                 child: SizedBox(
                   height: 54,
                   child: ElevatedButton(
-                    onPressed: onPauseResume,
+                    onPressed: action,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor:
-                          isPaused ? AppColors.accent : const Color(0xFFFF7A1A),
+                      backgroundColor: buttonColor,
                       foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(27),
@@ -295,12 +320,10 @@ class RunStatsView extends StatelessWidget {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(isPaused
-                            ? Icons.play_arrow_rounded
-                            : Icons.pause_rounded),
+                        Icon(icon),
                         const SizedBox(width: 8),
                         Text(
-                          isPaused ? 'ไปต่อ' : 'หยุดชั่วคราว',
+                          label,
                           style: const TextStyle(
                               fontSize: 16, fontWeight: FontWeight.w800),
                         ),
@@ -309,22 +332,24 @@ class RunStatsView extends StatelessWidget {
                   ),
                 ),
               ),
-              const SizedBox(width: 12),
-              SizedBox(
-                height: 54,
-                width: 54,
-                child: OutlinedButton(
-                  onPressed: onStop,
-                  style: OutlinedButton.styleFrom(
-                    padding: EdgeInsets.zero,
-                    side:
-                        BorderSide(color: Colors.white.withValues(alpha: 0.25)),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(27)),
+              if (isRunning) ...[
+                const SizedBox(width: 12),
+                SizedBox(
+                  height: 54,
+                  width: 54,
+                  child: OutlinedButton(
+                    onPressed: onStop,
+                    style: OutlinedButton.styleFrom(
+                      padding: EdgeInsets.zero,
+                      side: BorderSide(
+                          color: Colors.white.withValues(alpha: 0.25)),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(27)),
+                    ),
+                    child: const Icon(Icons.stop_rounded, color: Colors.white),
                   ),
-                  child: const Icon(Icons.stop_rounded, color: Colors.white),
                 ),
-              ),
+              ],
             ],
           ),
         ],
