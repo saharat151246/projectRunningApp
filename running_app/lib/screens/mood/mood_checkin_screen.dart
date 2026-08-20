@@ -3,8 +3,9 @@ import '../../theme/app_theme.dart';
 import '../../widgets/primary_button.dart';
 import '../../services/run_service.dart';
 
-/// หน้าเช็คอินความรู้สึกหลังวิ่งเสร็จ - ข้อมูลนี้จะถูกเก็บไว้ให้ AI Coach
-/// นำไปวิเคราะห์ร่วมกับสถิติระยะทาง เพื่อประเมินความเสี่ยงบาดเจ็บได้แม่นยำขึ้น
+/// หน้าเช็คอินความรู้สึกหลังวิ่งเสร็จ - ออกแบบตามหลัก UI App Design Skill
+/// ธีม: Modern Blush Pink & Warm Charcoal (human-made feel, มินิมอล, ไม่เป็น AI เทมเพลต)
+/// รองรับ: หน้าจอโทรศัพท์ทุกขนาด (Small SE, Medium, Large, Foldable) โดยไม่เกิด Layout Overflow / Text Overlap
 class MoodCheckinScreen extends StatefulWidget {
   final String runId;
   const MoodCheckinScreen({super.key, required this.runId});
@@ -26,7 +27,24 @@ class _MoodCheckinScreenState extends State<MoodCheckinScreen> {
   Future<void> _save() async {
     if (_selected == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('เลือกความรู้สึกก่อนนะครับ')),
+        SnackBar(
+          content: const Row(
+            children: [
+              Icon(Icons.info_outline_rounded, color: Colors.white, size: 20),
+              SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'กรุณาเลือกความรู้สึกวันนี้ก่อนบันทึกนะครับ',
+                  style: TextStyle(fontWeight: FontWeight.w600),
+                ),
+              ),
+            ],
+          ),
+          backgroundColor: AppColors.primaryDark,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          margin: const EdgeInsets.all(16),
+        ),
       );
       return;
     }
@@ -59,176 +77,403 @@ class _MoodCheckinScreenState extends State<MoodCheckinScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        title: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          decoration: BoxDecoration(
+            color: AppColors.primary.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.auto_awesome_rounded, size: 14, color: AppColors.primary),
+              const SizedBox(width: 6),
+              Text(
+                'AI Coach Check-in',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.primary,
+                  letterSpacing: 0.3,
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 12),
+            child: TextButton.icon(
+              onPressed: _saving ? null : _skip,
+              icon: Icon(Icons.close_rounded, size: 18, color: AppColors.textSecondary),
+              label: Text(
+                'ข้าม',
+                style: TextStyle(
+                  color: AppColors.textSecondary,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14,
+                ),
+              ),
+              style: TextButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+            ),
+          ),
+        ],
+      ),
       body: SafeArea(
         child: Column(
           children: [
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
+                physics: const BouncingScrollPhysics(),
+                padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: TextButton(
-                        onPressed: _saving ? null : _skip,
-                        child: Text('ข้าม', style: TextStyle(color: AppColors.textSecondary)),
-                      ),
-                    ),
-                    const SizedBox(height: 4),
+                    // Header Section
                     Text(
                       'วันนี้รู้สึกอย่างไร?',
                       style: TextStyle(
-                        fontSize: 24,
+                        fontSize: 26,
                         fontWeight: FontWeight.w800,
                         color: AppColors.textPrimary,
+                        letterSpacing: -0.5,
+                        height: 1.2,
                       ),
                     ),
-                    const SizedBox(height: 6),
+                    const SizedBox(height: 8),
                     Text(
-                      'ข้อมูลนี้จะถูกเก็บไว้ให้ AI Coach ใช้ประเมินคำแนะนำให้แม่นยำขึ้น',
-                      style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
+                      'ข้อมูลนี้ช่วยให้ AI Coach วิเคราะห์ความเสี่ยงบาดเจ็บและปรับแผนฝึกซ้อมให้เหมาะกับคุณ',
+                      style: TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 13.5,
+                        height: 1.4,
+                      ),
                     ),
+                    const SizedBox(height: 20),
+
+                    // 1. Responsive Mood Selector Grid (ไร้ปัญหา Overflow)
+                    LayoutBuilder(
+                      builder: (context, constraints) {
+                        final width = constraints.maxWidth;
+                        final crossAxisCount = width < 340 ? 2 : (width > 600 ? 5 : 3);
+                        return GridView.builder(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: crossAxisCount,
+                            crossAxisSpacing: 10,
+                            mainAxisSpacing: 10,
+                            childAspectRatio: 1.15,
+                          ),
+                          itemCount: _options.length,
+                          itemBuilder: (context, index) {
+                            final mood = _options[index];
+                            final isSelected = _selected == mood;
+                            return _MoodOptionTile(
+                              mood: mood,
+                              isSelected: isSelected,
+                              onTap: () => setState(() => _selected = mood),
+                            );
+                          },
+                        );
+                      },
+                    ),
+
                     const SizedBox(height: 24),
 
-                    // ตัวเลือกอารมณ์
-                    Wrap(
-                      spacing: 10,
-                      runSpacing: 10,
-                      children: _options.map((mood) {
-                        final isSelected = _selected == mood;
-                        return GestureDetector(
-                          onTap: () => setState(() => _selected = mood),
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 150),
-                            width: (MediaQuery.of(context).size.width - 68) / 3,
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                            decoration: BoxDecoration(
-                              color: isSelected ? AppColors.primary.withValues(alpha: 0.1) : AppColors.surface,
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(
-                                color: isSelected ? AppColors.primary : AppColors.divider,
-                                width: isSelected ? 2 : 1,
+                    // 2. Sleep Hours Section (Custom Card Design)
+                    _CardContainer(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: AppColors.primary.withValues(alpha: 0.1),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Icon(
+                                  Icons.bedtime_rounded,
+                                  size: 18,
+                                  color: AppColors.primary,
+                                ),
                               ),
-                            ),
-                            child: Column(
-                              children: [
-                                Text(mood.emoji, style: const TextStyle(fontSize: 28)),
-                                const SizedBox(height: 6),
-                                Text(
-                                  mood.label,
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  'ชั่วโมงนอนเมื่อคืน',
                                   style: TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w600,
-                                    color: isSelected ? AppColors.primary : AppColors.textPrimary,
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 14.5,
+                                    color: AppColors.textPrimary,
                                   ),
                                 ),
-                              ],
-                            ),
+                              ),
+                              if (_sleepHours != null)
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.primary,
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Text(
+                                    '${_sleepHours!.toStringAsFixed(1)} ชม.',
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w800,
+                                      color: Colors.white,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ),
+                            ],
                           ),
-                        );
-                      }).toList(),
+                          const SizedBox(height: 14),
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: [4.0, 5.0, 6.0, 7.0, 8.0, 9.0].map((h) {
+                              final isSel = _sleepHours == h;
+                              return _SelectablePill(
+                                label: '${h.toInt()} ชม.',
+                                isSelected: isSel,
+                                onTap: () => setState(() => _sleepHours = isSel ? null : h),
+                              );
+                            }).toList(),
+                          ),
+                        ],
+                      ),
                     ),
 
-                    const SizedBox(height: 24),
-                    const Divider(),
                     const SizedBox(height: 16),
 
-                    // 💤 ชั่วโมงนอนเมื่อคืน
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text('ชั่วโมงนอนเมื่อคืน (ไม่บังคับ)',
-                            style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5)),
-                        if (_sleepHours != null)
-                          Text('${_sleepHours!.toStringAsFixed(1)} ชม.',
-                              style: TextStyle(fontWeight: FontWeight.w800, color: AppColors.primary)),
-                      ],
+                    // 3. Physical & Weather Conditions Card
+                    _CardContainer(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Stress Level
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: AppColors.accent.withValues(alpha: 0.12),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Icon(
+                                  Icons.psychology_rounded,
+                                  size: 18,
+                                  color: AppColors.accent,
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              Text(
+                                'ระดับความเครียดสะสม',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 14.5,
+                                  color: AppColors.textPrimary,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: [
+                              _SelectablePill(
+                                label: '🟢 ผ่อนคลาย (ต่ำ)',
+                                isSelected: _stressLevel == 'low',
+                                onTap: () => setState(
+                                  () => _stressLevel = _stressLevel == 'low' ? null : 'low',
+                                ),
+                              ),
+                              _SelectablePill(
+                                label: '🟡 ปานกลาง',
+                                isSelected: _stressLevel == 'medium',
+                                onTap: () => setState(
+                                  () => _stressLevel = _stressLevel == 'medium' ? null : 'medium',
+                                ),
+                              ),
+                              _SelectablePill(
+                                label: '🔴 เครียดสูง',
+                                isSelected: _stressLevel == 'high',
+                                onTap: () => setState(
+                                  () => _stressLevel = _stressLevel == 'high' ? null : 'high',
+                                ),
+                              ),
+                            ],
+                          ),
+
+                          const SizedBox(height: 18),
+                          Divider(color: AppColors.divider, height: 1),
+                          const SizedBox(height: 16),
+
+                          // Weather
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: AppColors.gold.withValues(alpha: 0.15),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Icon(
+                                  Icons.wb_sunny_rounded,
+                                  size: 18,
+                                  color: AppColors.gold,
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              Text(
+                                'สภาพอากาศขณะวิ่ง',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 14.5,
+                                  color: AppColors.textPrimary,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: [
+                              _SelectablePill(
+                                label: '❄️ เย็นสบาย',
+                                isSelected: _weather == 'cool',
+                                onTap: () => setState(
+                                  () => _weather = _weather == 'cool' ? null : 'cool',
+                                ),
+                              ),
+                              _SelectablePill(
+                                label: '☀️ ร้อนจัด',
+                                isSelected: _weather == 'hot',
+                                onTap: () => setState(
+                                  () => _weather = _weather == 'hot' ? null : 'hot',
+                                ),
+                              ),
+                              _SelectablePill(
+                                label: '🌧️ ฝนตก',
+                                isSelected: _weather == 'rainy',
+                                onTap: () => setState(
+                                  () => _weather = _weather == 'rainy' ? null : 'rainy',
+                                ),
+                              ),
+                              _SelectablePill(
+                                label: '☁️ ปกติ',
+                                isSelected: _weather == 'normal',
+                                onTap: () => setState(
+                                  () => _weather = _weather == 'normal' ? null : 'normal',
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
-                    const SizedBox(height: 10),
-                    Wrap(
-                      spacing: 8,
-                      children: [4.0, 5.0, 6.0, 7.0, 8.0, 9.0].map((h) {
-                        final isSel = _sleepHours == h;
-                        return ChoiceChip(
-                          label: Text('${h.toInt()} ชม.'),
-                          selected: isSel,
-                          onSelected: (val) => setState(() => _sleepHours = val ? h : null),
-                          selectedColor: AppColors.primary.withValues(alpha: 0.2),
-                          side: BorderSide(color: isSel ? AppColors.primary : AppColors.divider),
-                        );
-                      }).toList(),
-                    ),
 
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 16),
 
-                    // 🧘 ระดับความเครียด
-                    const Text('ระดับความเครียดวันนี้',
-                        style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5)),
-                    const SizedBox(height: 10),
-                    Row(
-                      children: [
-                        _buildChoiceChip('ต่ำ', 'low', _stressLevel, (val) => setState(() => _stressLevel = val)),
-                        const SizedBox(width: 8),
-                        _buildChoiceChip('ปานกลาง', 'medium', _stressLevel, (val) => setState(() => _stressLevel = val)),
-                        const SizedBox(width: 8),
-                        _buildChoiceChip('สูง', 'high', _stressLevel, (val) => setState(() => _stressLevel = val)),
-                      ],
-                    ),
-
-                    const SizedBox(height: 20),
-
-                    // 🌤️ สภาพอากาศ
-                    const Text('สภาพอากาศขณะวิ่ง',
-                        style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5)),
-                    const SizedBox(height: 10),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: [
-                        _buildChoiceChip('❄️ เย็นสบาย', 'cool', _weather, (val) => setState(() => _weather = val)),
-                        _buildChoiceChip('☀️ ร้อน', 'hot', _weather, (val) => setState(() => _weather = val)),
-                        _buildChoiceChip('🌧️ ฝนตก', 'rainy', _weather, (val) => setState(() => _weather = val)),
-                        _buildChoiceChip('☁️ ปกติ', 'normal', _weather, (val) => setState(() => _weather = val)),
-                      ],
-                    ),
-
-                    const SizedBox(height: 24),
-                    const Text('อยากเล่าเพิ่มเติมไหม? (ไม่บังคับ)',
-                        style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
-                    const SizedBox(height: 8),
-                    TextField(
-                      controller: _noteCtrl,
-                      maxLines: 3,
-                      maxLength: 500,
-                      decoration: InputDecoration(
-                        hintText: 'เช่น วันนี้ปวดเข่านิดหน่อย หรือ วิ่งแล้วสดชื่นมาก...',
-                        filled: true,
-                        fillColor: AppColors.surface,
-                        contentPadding: const EdgeInsets.all(14),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(14),
-                          borderSide: BorderSide(color: AppColors.divider),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(14),
-                          borderSide: BorderSide(color: AppColors.divider),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(14),
-                          borderSide: BorderSide(color: AppColors.primary, width: 1.8),
-                        ),
+                    // 4. Notes Section Card
+                    _CardContainer(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: AppColors.primary.withValues(alpha: 0.1),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Icon(
+                                  Icons.edit_note_rounded,
+                                  size: 18,
+                                  color: AppColors.primary,
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              Text(
+                                'เล่ารายละเอียดเพิ่มเติม (ไม่บังคับ)',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 14.5,
+                                  color: AppColors.textPrimary,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          TextField(
+                            controller: _noteCtrl,
+                            maxLines: 3,
+                            maxLength: 500,
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: AppColors.textPrimary,
+                            ),
+                            decoration: InputDecoration(
+                              hintText: 'เช่น มีอาการตึงขาขวาเล็กน้อย หรือ วิ่งตามเพซเป้าหมายได้ดี...',
+                              hintStyle: TextStyle(
+                                color: AppColors.textSecondary.withValues(alpha: 0.7),
+                                fontSize: 13,
+                              ),
+                              filled: true,
+                              fillColor: AppColors.background,
+                              contentPadding: const EdgeInsets.all(14),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(14),
+                                borderSide: BorderSide(color: AppColors.divider),
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(14),
+                                borderSide: BorderSide(color: AppColors.divider),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(14),
+                                borderSide: BorderSide(color: AppColors.primary, width: 1.8),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
                 ),
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.all(16),
+
+            // Bottom Action Section
+            Container(
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.04),
+                    blurRadius: 10,
+                    offset: const Offset(0, -4),
+                  ),
+                ],
+              ),
               child: PrimaryButton(
-                label: 'บันทึก',
-                icon: Icons.check_rounded,
+                label: 'บันทึกการเช็คอิน',
+                icon: Icons.check_circle_rounded,
                 onPressed: _save,
                 loading: _saving,
               ),
@@ -238,16 +483,160 @@ class _MoodCheckinScreenState extends State<MoodCheckinScreen> {
       ),
     );
   }
+}
 
-  Widget _buildChoiceChip(
-      String label, String value, String? current, ValueChanged<String?> onSelect) {
-    final isSelected = current == value;
-    return ChoiceChip(
-      label: Text(label, style: TextStyle(fontSize: 12.5, fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500)),
-      selected: isSelected,
-      onSelected: (selected) => onSelect(selected ? value : null),
-      selectedColor: AppColors.primary.withValues(alpha: 0.2),
-      side: BorderSide(color: isSelected ? AppColors.primary : AppColors.divider),
+/// Custom Card Container เพื่อความสมมิติและเรียบหรู ป้องกันสไตล์ AI Card ที่ซ้ำซ้อน
+class _CardContainer extends StatelessWidget {
+  final Widget child;
+  const _CardContainer({required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.divider, width: 1),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: AppColors.isDark ? 0.2 : 0.03),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: child,
     );
   }
 }
+
+/// Mood Option Card Component - สัมผัสตอบสนองลื่นไหลแบบ Micro-interaction
+class _MoodOptionTile extends StatefulWidget {
+  final RunMood mood;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _MoodOptionTile({
+    required this.mood,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  State<_MoodOptionTile> createState() => _MoodOptionTileState();
+}
+
+class _MoodOptionTileState extends State<_MoodOptionTile> {
+  bool _isPressed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTapDown: (_) => setState(() => _isPressed = true),
+      onTapUp: (_) => setState(() => _isPressed = false),
+      onTapCancel: () => setState(() => _isPressed = false),
+      onTap: widget.onTap,
+      child: AnimatedScale(
+        scale: _isPressed ? 0.94 : (widget.isSelected ? 1.02 : 1.0),
+        duration: const Duration(milliseconds: 120),
+        curve: Curves.easeOutCubic,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          decoration: BoxDecoration(
+            color: widget.isSelected
+                ? AppColors.primary.withValues(alpha: 0.12)
+                : AppColors.surface,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(
+              color: widget.isSelected ? AppColors.primary : AppColors.divider,
+              width: widget.isSelected ? 2.0 : 1.0,
+            ),
+            boxShadow: widget.isSelected
+                ? [
+                    BoxShadow(
+                      color: AppColors.primary.withValues(alpha: 0.2),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ]
+                : [],
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                widget.mood.emoji,
+                style: const TextStyle(fontSize: 26),
+              ),
+              const SizedBox(height: 4),
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 6),
+                  child: Text(
+                    widget.mood.label,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: widget.isSelected ? FontWeight.w800 : FontWeight.w600,
+                      color: widget.isSelected ? AppColors.primary : AppColors.textPrimary,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Custom Pill Widget สำหรับตัวเลือก Sleep, Stress, Weather
+class _SelectablePill extends StatelessWidget {
+  final String label;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _SelectablePill({
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(14),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 150),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          constraints: const BoxConstraints(minHeight: 42),
+          decoration: BoxDecoration(
+            color: isSelected
+                ? AppColors.primary.withValues(alpha: 0.15)
+                : AppColors.background,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: isSelected ? AppColors.primary : AppColors.divider,
+              width: isSelected ? 1.5 : 1.0,
+            ),
+          ),
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 12.5,
+              fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+              color: isSelected ? AppColors.primary : AppColors.textPrimary,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
