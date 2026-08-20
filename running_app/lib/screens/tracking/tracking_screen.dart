@@ -56,6 +56,10 @@ class _TrackingScreenState extends State<TrackingScreen> {
 
   double _totalDistanceMeters = 0;
   Position? _lastPosition;
+  Position? _secondLastPosition; // จุดก่อนหน้า _lastPosition (ใช้ตรวจมุมเส้นทางป้องกัน GPS กระโดด)
+  LatLng? _initialCenter; // จุดศูนย์กลางแผนที่ตอนเปิดหน้าจอ (ไม่ใช่จุดเริ่มเส้นทาง)
+  int _warmUpPointsRemaining = 3; // ข้ามจุด GPS กี่จุดแรกที่มักไม่แม่นยำ
+  bool _isFirstValidPoint = true; // จุดแรกหลัง warm-up ยังไม่มี _lastPosition
   final List<LatLng> _routePoints = [];
   final List<DateTime> _routeTimestamps =
       []; // เวลาที่บันทึกแต่ละจุด คู่กับ _routePoints
@@ -139,12 +143,9 @@ class _TrackingScreenState extends State<TrackingScreen> {
               'รอสัญญาณ GPS นานเกินไป (ถ้าใช้ Emulator ต้องตั้งค่าตำแหน่งจำลองใน Extended Controls > Location ก่อน)');
         },
       );
-      setState(() {
-        _checkingPermission = false;
-        _routePoints.add(LatLng(pos.latitude, pos.longitude));
-        _routeTimestamps.add(DateTime.now());
-      });
-      _routeNotifier.value = List<LatLng>.from(_routePoints);
+      // บันทึกจุดศูนย์กลางแผนที่เฉยๆ ยังไม่เพิ่มลง route เพราะจุดแรกมักคลาดเคลื่อนสูง
+      _initialCenter = LatLng(pos.latitude, pos.longitude);
+      setState(() => _checkingPermission = false);
     } catch (e) {
       setState(() {
         _checkingPermission = false;
@@ -264,6 +265,17 @@ class _TrackingScreenState extends State<TrackingScreen> {
 
   void _start() {
     _runStartTime ??= DateTime.now();
+
+    // ล้างจุด route เดิมทั้งหมด (จุดจาก _initLocation ที่อาจคลาดเคลื่อน)
+    // เริ่มเก็บจุดใหม่สดจาก GPS stream เท่านั้น
+    _routePoints.clear();
+    _routeTimestamps.clear();
+    _lastPosition = null;
+    _secondLastPosition = null;
+    _warmUpPointsRemaining = 3; // ข้ามจุดแรกๆ ที่มักยังไม่แม่น
+    _isFirstValidPoint = true; // จุดแรกหลัง warm-up จะไม่คำนวณระยะ
+    _routeNotifier.value = const [];
+
     setState(() {
       _isRunning = true;
       _isPaused = false;
@@ -280,10 +292,9 @@ class _TrackingScreenState extends State<TrackingScreen> {
     late final LocationSettings settings;
     if (defaultTargetPlatform == TargetPlatform.android) {
       settings = AndroidSettings(
-        accuracy: LocationAccuracy.high,
-        distanceFilter: 3,
-        forceLocationManager: true,
-        intervalDuration: const Duration(seconds: 1),
+        accuracy: LocationAccuracy.best,
+        distanceFilter: 5,
+        intervalDuration: const Duration(seconds: 2),
         foregroundNotificationConfig: const ForegroundNotificationConfig(
           notificationText: 'RunMate กำลังบันทึกพิกัดการวิ่งในเบื้องหลัง',
           notificationTitle: 'กำลังวิ่งอยู่...',
@@ -293,16 +304,16 @@ class _TrackingScreenState extends State<TrackingScreen> {
     } else if (defaultTargetPlatform == TargetPlatform.iOS ||
         defaultTargetPlatform == TargetPlatform.macOS) {
       settings = AppleSettings(
-        accuracy: LocationAccuracy.high,
-        distanceFilter: 3,
+        accuracy: LocationAccuracy.best,
+        distanceFilter: 5,
         activityType: ActivityType.fitness,
         allowBackgroundLocationUpdates: true,
         showBackgroundLocationIndicator: true,
       );
     } else {
       settings = const LocationSettings(
-        accuracy: LocationAccuracy.high,
-        distanceFilter: 3,
+        accuracy: LocationAccuracy.best,
+        distanceFilter: 5,
       );
     }
 
@@ -320,7 +331,36 @@ class _TrackingScreenState extends State<TrackingScreen> {
   }
 
   void _onPositionUpdate(Position position) {
+    // ── กรอง GPS คุณภาพต่ำ ──
+    // 1) accuracy สูงเกินไป (ค่า accuracy ยิ่งมาก = ยิ่งไม่แม่น) → ข้าม
+    //    ลดเกณฑ์จาก 25 เหลือ 20 ม. เพื่อเพิ่มความแม่นยำ
+    if (position.accuracy > 20) return;
+
+    // 2) ข้ามจุดอุ่นเครื่อง (warm-up) ช่วงแรกที่ GPS ยังล็อกสัญญาณไม่เต็ม
+    //    *** สำคัญ: ไม่ set _lastPosition ในช่วง warm-up เพราะจุดเหล่านี้ไม่แม่น
+    //    ถ้า set แล้ว จุดแรกที่เริ่มเก็บจริงจะลากเส้นมาจากตำแหน่งที่ผิด ทำให้เส้นเพี้ยน
+    if (_warmUpPointsRemaining > 0) {
+      _warmUpPointsRemaining--;
+      return; // ไม่ set _lastPosition — ให้จุดหลัง warm-up เริ่มสดเอง
+    }
+
+    // 3) ตรวจความเร็วผิดปกติ: GPS อาจรายงานตำแหน่งกระโดดไกล
+    //    ถ้าความเร็วเกิน ~50 กม./ชม. (13.9 ม./วินาที) ซึ่งเร็วเกินกว่าจะวิ่งได้ → ข้าม
+    if (position.speed > 13.9 && position.speed != 0.0) return;
+
     final newPoint = LatLng(position.latitude, position.longitude);
+
+    // จุดแรกหลัง warm-up: เพิ่มลง route เลยโดยไม่คำนวณระยะ (ไม่มีจุดก่อนหน้าให้เทียบ)
+    if (_isFirstValidPoint) {
+      _isFirstValidPoint = false;
+      _lastPosition = position;
+      _secondLastPosition = null;
+      _routePoints.add(newPoint);
+      _routeTimestamps.add(DateTime.now());
+      _routeNotifier.value = List<LatLng>.from(_routePoints);
+      _mapController.move(newPoint, _mapController.camera.zoom);
+      return;
+    }
 
     if (_lastPosition != null) {
       final segmentMeters = Geolocator.distanceBetween(
@@ -329,11 +369,38 @@ class _TrackingScreenState extends State<TrackingScreen> {
         position.latitude,
         position.longitude,
       );
+
+      // 4) ระยะเส้นตรงระหว่าง 2 จุดน้อยกว่า 2 ม. = อยู่กับที่ ไม่บวกระยะ
+      //    มากกว่า 50 ม. ภายในรอบเดียว (~2 วินาที) = GPS กระโดด → ข้ามทั้งจุด
+      if (segmentMeters > 50) return;
+
+      // 5) ตรวจมุมหักของเส้นทาง: ถ้ามีจุดก่อนหน้า 2 จุด และเกิดการหักมุมแหลมมาก
+      //    (เกิน 150°) ภายในระยะสั้น มักเป็น GPS กระโดดไปแล้วกลับ → ข้าม
+      if (_secondLastPosition != null && segmentMeters > 5) {
+        final bearing1 = Geolocator.bearingBetween(
+          _secondLastPosition!.latitude,
+          _secondLastPosition!.longitude,
+          _lastPosition!.latitude,
+          _lastPosition!.longitude,
+        );
+        final bearing2 = Geolocator.bearingBetween(
+          _lastPosition!.latitude,
+          _lastPosition!.longitude,
+          position.latitude,
+          position.longitude,
+        );
+        double angleDiff = (bearing2 - bearing1).abs();
+        if (angleDiff > 180) angleDiff = 360 - angleDiff;
+        // มุมเปลี่ยนเกิน 150° ในระยะสั้น = เส้นทางหักกลับ → GPS spike
+        if (angleDiff > 150 && segmentMeters < 30) return;
+      }
+
       if (segmentMeters > 2) {
         _totalDistanceMeters += segmentMeters;
       }
     }
 
+    _secondLastPosition = _lastPosition;
     _lastPosition = position;
     _routePoints.add(newPoint);
     _routeTimestamps.add(DateTime.now());
@@ -672,9 +739,7 @@ class _TrackingScreenState extends State<TrackingScreen> {
     return FlutterMap(
       mapController: _mapController,
       options: MapOptions(
-        initialCenter: _routePoints.isNotEmpty
-            ? _routePoints.first
-            : const LatLng(13.7563, 100.5018),
+        initialCenter: _initialCenter ?? const LatLng(13.7563, 100.5018),
         initialZoom: 17,
       ),
       children: [
@@ -687,6 +752,12 @@ class _TrackingScreenState extends State<TrackingScreen> {
         ValueListenableBuilder<List<LatLng>>(
           valueListenable: _routeNotifier,
           builder: (context, points, _) {
+            // จุดที่จะแสดงเป็นหมุดตำแหน่งปัจจุบัน:
+            // - ถ้ามี route แล้ว → ใช้จุดล่าสุดของ route
+            // - ถ้ายังไม่มี route (ยังไม่กดวิ่ง/อยู่ช่วง warm-up) → ใช้ _initialCenter
+            final LatLng? currentPos =
+                points.isNotEmpty ? points.last : _initialCenter;
+
             return Stack(
               children: [
                 if (points.length > 1)
@@ -699,18 +770,47 @@ class _TrackingScreenState extends State<TrackingScreen> {
                       ),
                     ],
                   ),
-                if (points.isNotEmpty)
+                if (currentPos != null)
                   MarkerLayer(
                     markers: [
                       Marker(
-                        point: points.last,
-                        width: 22,
-                        height: 22,
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: AppColors.primary,
-                            shape: BoxShape.circle,
-                            border: Border.all(color: Colors.white, width: 3),
+                        point: currentPos,
+                        width: 44,
+                        height: 44,
+                        child: Center(
+                          child: Stack(
+                            alignment: Alignment.center,
+                            children: [
+                              // วงรัศมีความแม่นยำ (accuracy ring)
+                              Container(
+                                width: 44,
+                                height: 44,
+                                decoration: BoxDecoration(
+                                  color: AppColors.primary
+                                      .withValues(alpha: 0.15),
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                              // จุดตำแหน่งตัวเอง
+                              Container(
+                                width: 18,
+                                height: 18,
+                                decoration: BoxDecoration(
+                                  color: AppColors.primary,
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                      color: Colors.white, width: 3),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: AppColors.primary
+                                          .withValues(alpha: 0.4),
+                                      blurRadius: 8,
+                                      spreadRadius: 2,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ),
