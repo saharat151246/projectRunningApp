@@ -13,6 +13,17 @@ const userSchema = new mongoose.Schema(
     height: { type: Number, default: null },
     age: { type: Number, default: null },
     gender: { type: String, default: null },
+    medical_condition: { type: String, default: '' },
+    level: {
+      type: String,
+      enum: ['มือสมัครเล่น', 'คนทั่วไป', 'มือโปร', 'amateur', 'general', 'pro', null],
+      default: 'คนทั่วไป',
+    },
+    goal: {
+      type: String,
+      enum: ['เพื่อสุขภาพ', 'เพื่อสร้างหุ่น', 'เพื่อแข่งขัน', 'health', 'fitness', 'race', null],
+      default: 'เพื่อสุขภาพ',
+    },
     reset_otp: { type: String, default: null },
     reset_otp_expires: { type: Date, default: null },
   },

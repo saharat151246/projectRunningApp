@@ -3,11 +3,13 @@ import 'theme/app_theme.dart';
 import 'screens/splash_screen.dart';
 import 'services/stats_service.dart';
 import 'services/theme_controller.dart';
+import 'services/language_controller.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await StatsService.instance.init();
   await ThemeController.instance.init();
+  await LanguageController.instance.init();
   runApp(const RunningApp());
 }
 
@@ -17,7 +19,10 @@ class RunningApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AnimatedBuilder(
-      animation: ThemeController.instance,
+      animation: Listenable.merge([
+        ThemeController.instance,
+        LanguageController.instance,
+      ]),
       builder: (context, _) {
         return MaterialApp(
           title: 'RunMate',
@@ -29,7 +34,7 @@ class RunningApp extends StatelessWidget {
           themeAnimationCurve: Curves.easeInOut,
           builder: (context, child) {
             return KeyedSubtree(
-              key: ValueKey(ThemeController.instance.rebuildToken),
+              key: ValueKey('${ThemeController.instance.rebuildToken}_${LanguageController.instance.rebuildToken}_${LanguageController.instance.code}'),
               child: child!,
             );
           },

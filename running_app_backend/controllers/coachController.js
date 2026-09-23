@@ -1,4 +1,5 @@
 const Run = require('../models/Run');
+const User = require('../models/User');
 const { buildCoachContext, buildFallbackDailyPlan, computeLongTermInsights } = require('../utils/aiCoach');
 
 const GEMINI_MODEL = 'gemini-3.1-flash-lite';
@@ -9,30 +10,33 @@ const INSIGHTS_SYSTEM_PROMPT = `คุณคือ AI Athlete Data Analyst ท�
 const SYSTEM_PROMPT = `คุณคือ AI Coach ผู้ช่วยแนะนำการฝึกซ้อมวิ่งในแอปพลิเคชันวิ่ง
 กติกา:
 - ตอบเป็นภาษาไทย กระชับ 3-4 ประโยค เป็นกันเองเหมือนโค้ชที่ห่วงใย
-- เน้นความปลอดภัยและการลดความเสี่ยงบาดเจ็บเป็นอันดับแรก
+- ให้ความสำคัญกับข้อมูลโปรไฟล์ผู้ใช้เสมอ (ระดับการวิ่ง level, เป้าหมาย goal, สรีระ/อายุ/BMI, และโรคประจำตัว medical_condition)
+- หากผู้ใช้มีโรคประจำตัว ให้เน้นย้ำความปลอดภัย ไม่หักโหม และแนะนำให้หยุดพักทันทีหากมีอาการผิดปกติ
+- หากผู้ใช้มีเป้าหมายเฉพาะ เช่น "เพื่อสร้างหุ่น" ให้เน้นโซน 2 เผาผลาญไขมัน หรือ "เพื่อแข่งขัน" ให้แนะนำเรื่องความเร็ว/เพซ
 - ห้ามให้คำวินิจฉัยทางการแพทย์ใดๆ ถ้าพบสัญญาณที่น่ากังวลมาก ให้แนะนำให้ปรึกษาแพทย์/ผู้เชี่ยวชาญแทน
 - ใช้ตัวเลขสถิติที่ให้มาประกอบคำแนะนำให้เป็นรูปธรรม
-- ถ้ามีข้อมูลความรู้สึกหลังวิ่ง (mood), ชั่วโมงนอน (sleep_hours), ความเครียด (stress_level) ที่ผู้ใช้เช็คอินไว้ ให้นำมาพิจารณาร่วมกับสถิติระยะทาง ไม่ใช่ดูแค่ตัวเลขอย่างเดียว
+- ถ้ามีข้อมูลความรู้สึกหลังวิ่ง (mood), ชั่วโมงนอน (sleep_hours), ความเครียด (stress_level) ที่ผู้ใช้เช็คอินไว้ ให้นำมาพิจารณาร่วมกับสถิติระยะทาง
 - ห้ามใส่คำนำหรือคำลงท้ายแบบ "แน่นอนครับ" ตอบเนื้อหาคำแนะนำโดยตรง`;
 
 const CHAT_SYSTEM_PROMPT = `คุณคือ AI Coach ผู้ช่วยตอบคำถามเกี่ยวกับการออกกำลังกายในแอปพลิเคชันวิ่ง
 กติกา:
 - ตอบเฉพาะเรื่องการออกกำลังกาย การวิ่ง การฝึกซ้อม โภชนาการเพื่อการออกกำลังกาย การพักฟื้น และการป้องกันการบาดเจ็บเท่านั้น
+- นำข้อมูลโปรไฟล์ของผู้ใช้ (ระดับการวิ่ง, เป้าหมาย, สรีระ, โรคประจำตัว) มาปรับคำตอบให้เข้ากับบุคคลโดยตรง
+- ถ้ามีโรคประจำตัว ให้เตือนเรื่องความปลอดภัยเป็นอันดับแรกเสมอ
 - ถ้าคำถามไม่เกี่ยวกับเรื่องเหล่านี้เลย ให้ตอบสุภาพว่าคุณช่วยได้เฉพาะเรื่องการออกกำลังกาย แล้วชวนกลับมาคุยเรื่องนั้น
 - ตอบเป็นภาษาไทย กระชับ เข้าใจง่าย เป็นกันเอง ไม่ต้องยาวเกินความจำเป็น
-- ห้ามวินิจฉัยอาการทางการแพทย์ ถ้าผู้ใช้เล่าอาการที่น่ากังวล (เช่น เจ็บหน้าอก, หายใจไม่ออก) ให้แนะนำให้ไปพบแพทย์ทันที
-- คุณรู้ข้อมูลสถิติการวิ่งของผู้ใช้คนนี้ด้วย (ให้ไว้ด้านล่าง) ใช้ประกอบคำตอบเมื่อเกี่ยวข้อง แต่ไม่ต้องท่องซ้ำทุกครั้งถ้าคำถามไม่เกี่ยวกับสถิติของเขา`;
+- ห้ามวินิจฉัยอาการทางการแพทย์ ถ้าผู้ใช้เล่าอาการที่น่ากังวล ให้แนะนำให้ไปพบแพทย์ทันที`;
 
 const DAILY_PLAN_PROMPT = `คุณคือ AI Coach ที่เชี่ยวชาญด้านการวางแผนซ้อมวิ่งรายวัน
-จงสร้างแผนซ้อมสำหรับวันนี้ให้ผู้ใช้ โดยพิจารณาจากสถิติและข้อมูลการพักฟื้นล่าสุด (ชั่วโมงนอน, ความเครียด, ความเหนื่อยล้าสะสม, overtraining risk)
+จงสร้างแผนซ้อมสำหรับวันนี้ให้ผู้ใช้ โดยพิจารณาจากข้อมูลโปรไฟล์ (ระดับ level, เป้าหมาย goal, โรคประจำตัว) ร่วมกับสถิติและข้อมูลการพักฟื้นล่าสุด (ชั่วโมงนอน, ความเครียด, ความเหนื่อยล้าสะสม, overtraining risk)
 ข้อบังคับ: ตอบเป็น JSON เท่านั้น รูปแบบ:
 {
   "title": "ชื่อแผนซ้อมเป็นภาษาไทย (กระชับ 3-5 คำ)",
   "activityType": "easy_run" | "interval" | "long_run" | "rest",
   "targetDistanceKm": 4.5 (เป็นตัวเลข 0 ถ้าเป็นวันพัก),
   "targetPace": "6:15 - 6:45" (หรือ "-" ถ้าเป็นวันพัก),
-  "rationale": "เหตุผลว่าทำไมวันนี้ถึงแนะนำแผนนี้ (อิงจากนอน/ความเครียด/ความเหนื่อยสะสม 1-2 ประโยค)",
-  "tips": "คำแนะนำเพิ่มเติมสั้นๆ 1 ประโยค"
+  "rationale": "เหตุผลว่าทำไมวันนี้ถึงแนะนำแผนนี้ (อิงจากโปรไฟล์ผู้ใช้และสถิติพักฟื้น 1-2 ประโยค)",
+  "tips": "คำแนะนำเพิ่มเติมสั้นๆ 1 ประโยค (เน้นข้อควรระวังตามสุขภาพ/เป้าหมาย)"
 }`;
 
 async function callGeminiDailyPlan(promptSummary) {
@@ -176,11 +180,14 @@ exports.getCoachAdvice = async (req, res) => {
       return res.json({ ...coachAdviceCache.get(cacheKey), cached: true });
     }
 
-    const runs = await Run.find({ user_id: req.userId }).select(
-      'distance_km duration_sec start_time mood note sleep_hours stress_level weather'
-    );
+    const [user, runs] = await Promise.all([
+      User.findById(req.userId),
+      Run.find({ user_id: req.userId }).select(
+        'distance_km duration_sec start_time mood note sleep_hours stress_level weather'
+      ),
+    ]);
 
-    const { stats, promptSummary, fallbackMessage } = buildCoachContext(runs);
+    const { stats, promptSummary, fallbackMessage } = buildCoachContext(runs, user);
 
     if (stats.totalRuns === 0) {
       const responseData = { advice: fallbackMessage, stats, source: 'rule-based' };
@@ -211,11 +218,14 @@ exports.getDailyPlan = async (req, res) => {
       return res.json({ ...dailyPlanCache.get(cacheKey), cached: true });
     }
 
-    const runs = await Run.find({ user_id: req.userId }).select(
-      'distance_km duration_sec start_time mood note sleep_hours stress_level weather'
-    );
+    const [user, runs] = await Promise.all([
+      User.findById(req.userId),
+      Run.find({ user_id: req.userId }).select(
+        'distance_km duration_sec start_time mood note sleep_hours stress_level weather'
+      ),
+    ]);
 
-    const { stats, promptSummary } = buildCoachContext(runs);
+    const { stats, promptSummary } = buildCoachContext(runs, user);
 
     try {
       const plan = await callGeminiDailyPlan(promptSummary);
@@ -224,7 +234,7 @@ exports.getDailyPlan = async (req, res) => {
       return res.json(responseData);
     } catch (aiErr) {
       console.warn('Gemini daily plan failed, using fallback:', aiErr.message);
-      const fallbackPlan = buildFallbackDailyPlan(stats);
+      const fallbackPlan = buildFallbackDailyPlan(stats, user);
       return res.json({ plan: fallbackPlan, stats, source: 'rule-based' });
     }
   } catch (err) {
@@ -315,10 +325,13 @@ exports.chat = async (req, res) => {
       return res.status(400).json({ message: 'กรุณาส่งข้อความคำถาม' });
     }
 
-    const runs = await Run.find({ user_id: req.userId }).select(
-      'distance_km duration_sec start_time mood note sleep_hours stress_level weather'
-    );
-    const { promptSummary } = buildCoachContext(runs);
+    const [user, runs] = await Promise.all([
+      User.findById(req.userId),
+      Run.find({ user_id: req.userId }).select(
+        'distance_km duration_sec start_time mood note sleep_hours stress_level weather'
+      ),
+    ]);
+    const { promptSummary } = buildCoachContext(runs, user);
 
     try {
       const reply = await callGeminiChat({

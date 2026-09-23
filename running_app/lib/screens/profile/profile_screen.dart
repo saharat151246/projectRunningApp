@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import '../../theme/app_theme.dart';
 import '../../services/auth_service.dart';
 import '../../services/theme_controller.dart';
+import '../../services/language_controller.dart';
 import '../onboarding_screen.dart';
 import '../../widgets/user_avatar.dart';
 
@@ -20,6 +21,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
   double? _weight;
   double? _height;
   int? _age;
+  String? _medicalCondition;
+  String _level = 'คนทั่วไป';
+  String _goal = 'เพื่อสุขภาพ';
 
   // เป้าหมายการวิ่ง
   double _weeklyGoalKm = 20.0;
@@ -46,6 +50,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
       _weight = prefs.getDouble('profile_weight') ?? (user?['weight'] as num?)?.toDouble();
       _height = prefs.getDouble('profile_height') ?? (user?['height'] as num?)?.toDouble();
       _age = prefs.getInt('profile_age') ?? (user?['age'] as num?)?.toInt();
+      _medicalCondition = prefs.getString('profile_medical_condition') ?? (user?['medical_condition'] as String?);
+      _level = prefs.getString('profile_level') ?? (user?['level'] as String?) ?? 'คนทั่วไป';
+      _goal = prefs.getString('profile_goal') ?? (user?['goal'] as String?) ?? 'เพื่อสุขภาพ';
       _weeklyGoalKm = prefs.getDouble('profile_weekly_goal_km') ?? 20.0;
       _weeklyRunsGoal = prefs.getInt('profile_weekly_runs_goal') ?? 4;
       _dailyReminder = prefs.getBool('pref_daily_reminder') ?? true;
@@ -60,6 +67,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (_weight != null) await prefs.setDouble('profile_weight', _weight!);
     if (_height != null) await prefs.setDouble('profile_height', _height!);
     if (_age != null) await prefs.setInt('profile_age', _age!);
+    if (_medicalCondition != null) await prefs.setString('profile_medical_condition', _medicalCondition!);
+    await prefs.setString('profile_level', _level);
+    await prefs.setString('profile_goal', _goal);
     await prefs.setDouble('profile_weekly_goal_km', _weeklyGoalKm);
     await prefs.setInt('profile_weekly_runs_goal', _weeklyRunsGoal);
     await prefs.setBool('pref_daily_reminder', _dailyReminder);
@@ -74,6 +84,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final weightCtrl = TextEditingController(text: _weight != null ? '$_weight' : '');
     final heightCtrl = TextEditingController(text: _height != null ? '$_height' : '');
     final ageCtrl = TextEditingController(text: _age != null ? '$_age' : '');
+    final medicalCtrl = TextEditingController(text: _medicalCondition ?? (user?['medical_condition'] as String? ?? ''));
+    String selectedLevel = _level;
+    String selectedGoal = _goal;
     final avatarUrlCtrl = TextEditingController(text: (user?['avatar_url'] as String?) ?? '');
 
     String selectedAvatar = (user?['avatar_url'] as String?) ?? '';
@@ -191,6 +204,37 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   keyboardType: TextInputType.number,
                   decoration: const InputDecoration(labelText: 'อายุ (ปี)', prefixIcon: Icon(Icons.cake_outlined)),
                 ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: medicalCtrl,
+                  decoration: const InputDecoration(labelText: 'โรคประจำตัว / ข้อจำกัดสุขภาพ', prefixIcon: Icon(Icons.medical_information_outlined)),
+                ),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<String>(
+                  initialValue: ['มือสมัครเล่น', 'คนทั่วไป', 'มือโปร'].contains(selectedLevel) ? selectedLevel : 'คนทั่วไป',
+                  decoration: const InputDecoration(labelText: 'ระดับการวิ่ง (Level)', prefixIcon: Icon(Icons.speed_rounded)),
+                  items: const [
+                    DropdownMenuItem(value: 'มือสมัครเล่น', child: Text('🥉 มือสมัครเล่น')),
+                    DropdownMenuItem(value: 'คนทั่วไป', child: Text('🥈 คนทั่วไป')),
+                    DropdownMenuItem(value: 'มือโปร', child: Text('🥇 มือโปร')),
+                  ],
+                  onChanged: (val) {
+                    if (val != null) setDialogState(() => selectedLevel = val);
+                  },
+                ),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<String>(
+                  initialValue: ['เพื่อสุขภาพ', 'เพื่อสร้างหุ่น', 'เพื่อแข่งขัน'].contains(selectedGoal) ? selectedGoal : 'เพื่อสุขภาพ',
+                  decoration: const InputDecoration(labelText: 'เป้าหมายหลัก (Goal)', prefixIcon: Icon(Icons.track_changes_rounded)),
+                  items: const [
+                    DropdownMenuItem(value: 'เพื่อสุขภาพ', child: Text('💖 เพื่อสุขภาพ')),
+                    DropdownMenuItem(value: 'เพื่อสร้างหุ่น', child: Text('💪 เพื่อสร้างหุ่น')),
+                    DropdownMenuItem(value: 'เพื่อแข่งขัน', child: Text('🏆 เพื่อแข่งขัน')),
+                  ],
+                  onChanged: (val) {
+                    if (val != null) setDialogState(() => selectedGoal = val);
+                  },
+                ),
               ],
             ),
           ),
@@ -205,12 +249,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 final newWeight = double.tryParse(weightCtrl.text.trim());
                 final newHeight = double.tryParse(heightCtrl.text.trim());
                 final newAge = int.tryParse(ageCtrl.text.trim());
+                final newMedical = medicalCtrl.text.trim();
                 final newAvatar = selectedAvatar.trim();
 
                 setState(() {
                   if (newWeight != null && newWeight > 0) _weight = newWeight;
                   if (newHeight != null && newHeight > 0) _height = newHeight;
                   if (newAge != null && newAge > 0) _age = newAge;
+                  _medicalCondition = newMedical.isNotEmpty ? newMedical : 'ไม่มี';
+                  _level = selectedLevel;
+                  _goal = selectedGoal;
                 });
                 _saveProfilePrefs();
 
@@ -221,6 +269,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   weight: newWeight,
                   height: newHeight,
                   age: newAge,
+                  medicalCondition: newMedical.isNotEmpty ? newMedical : 'ไม่มี',
+                  level: selectedLevel,
+                  goal: selectedGoal,
                   avatarUrl: newAvatar,
                 );
 
@@ -256,8 +307,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
         title: Row(
           children: [
             Icon(Icons.flag_rounded, color: AppColors.primary),
-            SizedBox(width: 8),
-            Text('ตั้งเป้าหมายการวิ่ง', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const SizedBox(width: 8),
+            const Text('ตั้งเป้าหมายการวิ่ง', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
           ],
         ),
         content: Column(
@@ -726,6 +777,62 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                 ],
               ),
+              const SizedBox(height: 12),
+              // Level & Goal badge card
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: AppColors.surface,
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(color: AppColors.divider),
+                ),
+                child: Column(
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Row(
+                            children: [
+                              Icon(Icons.speed_rounded, size: 18, color: AppColors.primary),
+                              const SizedBox(width: 6),
+                              Text('ระดับ: ', style: TextStyle(fontSize: 12.5, color: AppColors.textSecondary)),
+                              Text(_level, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+                            ],
+                          ),
+                        ),
+                        Expanded(
+                          child: Row(
+                            children: [
+                              Icon(Icons.track_changes_rounded, size: 18, color: AppColors.accent),
+                              const SizedBox(width: 6),
+                              Text('เป้าหมาย: ', style: TextStyle(fontSize: 12.5, color: AppColors.textSecondary)),
+                              Text(_goal, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    if (_medicalCondition != null &&
+                        _medicalCondition!.trim().isNotEmpty &&
+                        _medicalCondition != 'ไม่มี') ...[
+                      const Divider(height: 18),
+                      Row(
+                        children: [
+                          const Icon(Icons.health_and_safety_outlined, size: 18, color: Colors.orange),
+                          const SizedBox(width: 6),
+                          Text('โรคประจำตัว: ', style: TextStyle(fontSize: 12.5, color: AppColors.textSecondary)),
+                          Expanded(
+                            child: Text(
+                              _medicalCondition!,
+                              style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: Colors.orange),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ],
+                ),
+              ),
 
             const SizedBox(height: 28),
             const Text('บัญชีของฉัน', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
@@ -747,8 +854,32 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
 
             const SizedBox(height: 24),
-            Text('ทั่วไป', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: AppColors.textPrimary)),
+            Text(LanguageController.instance.isThai ? 'ทั่วไป' : 'General',
+                style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: AppColors.textPrimary)),
             const SizedBox(height: 10),
+            _MenuTile(
+              icon: Icons.translate_rounded,
+              label: LanguageController.instance.isThai ? 'ภาษา (Language)' : 'Language (ภาษา)',
+              trailing: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: AppColors.primaryLight,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  LanguageController.instance.isThai ? 'ไทย (TH)' : 'English (EN)',
+                  style: TextStyle(
+                    color: AppColors.primary,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              onTap: () async {
+                await LanguageController.instance.toggleLanguage();
+                if (mounted) setState(() {});
+              },
+            ),
             _MenuTile(
               icon: Icons.dark_mode_outlined,
               label: 'โหมดการแสดงผล',
@@ -822,12 +953,14 @@ class _MenuTile extends StatelessWidget {
   final IconData icon;
   final String label;
   final bool isDanger;
+  final Widget? trailing;
   final VoidCallback? onTap;
 
   const _MenuTile({
     required this.icon,
     required this.label,
     this.isDanger = false,
+    this.trailing,
     this.onTap,
   });
 
@@ -859,7 +992,7 @@ class _MenuTile extends StatelessWidget {
           child: Icon(icon, color: iconColor, size: 20),
         ),
         title: Text(label, style: TextStyle(color: color, fontWeight: FontWeight.w700, fontSize: 14)),
-        trailing: Icon(Icons.chevron_right_rounded, color: AppColors.textSecondary.withValues(alpha: 0.6), size: 20),
+        trailing: trailing ?? Icon(Icons.chevron_right_rounded, color: AppColors.textSecondary.withValues(alpha: 0.6), size: 20),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       ),
     );

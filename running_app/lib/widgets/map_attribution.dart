@@ -15,9 +15,9 @@ class MapAttribution extends StatelessWidget {
         color: Colors.white.withValues(alpha: 0.75),
         borderRadius: BorderRadius.circular(4),
       ),
-      child: Text(
+      child: const Text(
         MapConfig.attribution,
-        style: const TextStyle(fontSize: 9, color: Colors.black87, fontWeight: FontWeight.w600),
+        style: TextStyle(fontSize: 9, color: Colors.black87, fontWeight: FontWeight.w600),
       ),
     );
   }

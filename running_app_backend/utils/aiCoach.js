@@ -36,15 +36,42 @@ function calcStreak(sortedDateKeysDesc) {
   return streak;
 }
 
-function buildCoachContext(runs) {
+function buildCoachContext(runs, user = null) {
   const now = new Date();
 
+  // คำนวณ BMI ของผู้ใช้
+  let bmi = null;
+  let bmiCategory = null;
+  if (user?.weight && user?.height && user.height > 0) {
+    const heightM = user.height / 100;
+    bmi = Math.round((user.weight / (heightM * heightM)) * 10) / 10;
+    if (bmi < 18.5) bmiCategory = 'น้ำหนักน้อย';
+    else if (bmi < 23) bmiCategory = 'สมส่วน';
+    else if (bmi < 25) bmiCategory = 'ท้วม';
+    else bmiCategory = 'น้ำหนักเกินเกณฑ์';
+  }
+
+  const userProfileSummary = user
+    ? `
+ข้อมูลประจำตัวผู้ใช้:
+- ชื่อ: ${user.name}
+- อายุ: ${user.age ? `${user.age} ปี` : 'ไม่ได้ระบุ'}
+- น้ำหนัก: ${user.weight ? `${user.weight} กก.` : 'ไม่ได้ระบุ'} | ส่วนสูง: ${user.height ? `${user.height} ซม.` : 'ไม่ได้ระบุ'}
+- ค่า BMI: ${bmi ? `${bmi} (${bmiCategory})` : 'ไม่ได้ระบุ'}
+- ระดับนักวิ่ง: ${user.level || 'คนทั่วไป'}
+- เป้าหมายการวิ่ง: ${user.goal || 'เพื่อสุขภาพ'}
+- โรคประจำตัว / ข้อจำกัดสุขภาพ: ${user.medical_condition && user.medical_condition.trim() !== '' ? user.medical_condition : 'ไม่มี'}
+`.trim()
+    : '';
+
   if (runs.length === 0) {
+    const hasMed = user?.medical_condition && user.medical_condition.trim() !== '' && user.medical_condition !== 'ไม่มี';
+    const fallback = `ยินดีต้อนรับคุณ ${user?.name || ''}! ยังไม่มีข้อมูลประวัติการวิ่ง ${hasMed ? `เนื่องจากมีบันทึกโรคประจำตัว (${user.medical_condition}) แนะนำให้เริ่มเดินสลับวิ่งเบาๆ และฟังร่างกายเสมอ` : 'ลองเริ่มวิ่งก้าวแรกเบาๆ วันนี้ได้เลย'} แล้ว AI Coach จะคอยติดตามและให้คำแนะนำส่วนบุคคลครับ 🏃✨`;
+
     return {
       stats: { totalRuns: 0 },
-      promptSummary: 'ผู้ใช้ยังไม่มีประวัติการวิ่งเลย',
-      fallbackMessage:
-        'ยังไม่มีข้อมูลการวิ่งของคุณเลย ลองเริ่มวิ่งครั้งแรกดูก่อน แล้วกลับมาดูคำแนะนำที่นี่ได้เลย 🏃',
+      promptSummary: `${userProfileSummary}\nผู้ใช้ยังไม่มีประวัติการวิ่งเลย (เพิ่งเริ่มต้น)`,
+      fallbackMessage: fallback.trim(),
     };
   }
 
@@ -122,6 +149,7 @@ function buildCoachContext(runs) {
   };
 
   const promptSummary = `
+${userProfileSummary ? `${userProfileSummary}\n` : ''}สถิติการวิ่งของผู้ใช้:
 - จำนวนครั้งที่วิ่งทั้งหมด: ${totalRuns} ครั้ง
 - ระยะทางรวม: ${stats.totalDistanceKm} กม.
 - วิ่งไกลที่สุดครั้งเดียว: ${stats.longestRunKm} กม.
@@ -159,9 +187,12 @@ function buildCoachContext(runs) {
   if (inactivityWarning) {
     fallbackParts.push(`คุณไม่ได้วิ่งมา ${daysSinceLastRun} วันแล้ว ลองกลับมาวิ่งเบาๆ อีกครั้งเพื่อรักษาความต่อเนื่อง`);
   }
+  if (user?.medical_condition && user.medical_condition.trim() !== '' && user.medical_condition !== 'ไม่มี') {
+    fallbackParts.push(`(ข้อควรระวังเรื่องสุขภาพ: อย่าลืมตรวจดูอาการ ${user.medical_condition} และหลีกเลี่ยงการหักโหมเกินขีดจำกัด)`);
+  }
   if (fallbackParts.length === 0) {
     fallbackParts.push(
-      `ภาพรวมการวิ่งของคุณตอนนี้อยู่ในเกณฑ์ดี วิ่งต่อเนื่อง ${currentStreakDays} วัน ระยะทางสัปดาห์นี้ ${stats.thisWeekKm} กม. ทำต่อไปแบบนี้ได้เลย`
+      `ภาพรวมการวิ่งของคุณตอนนี้อยู่ในเกณฑ์ดี วิ่งต่อเนื่อง ${currentStreakDays} วัน ระยะทางสัปดาห์นี้ ${stats.thisWeekKm} กม. มุ่งสู่เป้าหมาย${user?.goal || 'เพื่อสุขภาพ'}ได้ต่อเนื่องเลยครับ`
     );
   }
 
@@ -172,7 +203,10 @@ function buildCoachContext(runs) {
   };
 }
 
-function buildFallbackDailyPlan(stats) {
+function buildFallbackDailyPlan(stats, user = null) {
+  const isBeginner = user?.level === 'มือสมัครเล่น';
+  const hasMedical = user?.medical_condition && user.medical_condition.trim() !== '' && user.medical_condition !== 'ไม่มี';
+
   if (stats.overtrainingRisk || stats.fatigueSignal || (stats.lastSleepHours != null && stats.lastSleepHours < 5)) {
     return {
       title: 'วันพักฟื้นร่างกาย (Active Recovery Day)',
@@ -180,25 +214,51 @@ function buildFallbackDailyPlan(stats) {
       targetDistanceKm: 0,
       targetPace: '-',
       rationale: 'ตรวจพบสัญญาณเหนื่อยล้าสะสมหรือนอนน้อย วันนี้แนะนำให้พักผ่อน ยืดเหยียดกล้ามเนื้อ หรือเดินเบาๆ เพื่อให้ร่างกายซ่อมแซมเต็มที่',
-      tips: 'จิบน้ำเรื่อยๆ และพยายามเข้านอนให้เร็วขึ้นในคืนนี้',
+      tips: hasMedical
+        ? `ดูแลอาการ ${user.medical_condition} เป็นพิเศษ จิบน้ำเรื่อยๆ และเข้านอนให้เร็วขึ้น`
+        : 'จิบน้ำเรื่อยๆ และพยายามเข้านอนให้เร็วขึ้นในคืนนี้',
     };
   }
   if (stats.daysSinceLastRun >= 3) {
     return {
       title: 'วิ่งฟื้นฟูเบาๆ (Easy Comeback Run)',
       activityType: 'easy_run',
-      targetDistanceKm: 3.0,
-      targetPace: '6:45 - 7:30',
+      targetDistanceKm: isBeginner ? 2.0 : 3.0,
+      targetPace: isBeginner ? '7:30 - 8:30' : '6:45 - 7:30',
       rationale: 'ไม่ได้วิ่งมาหลายวันแล้ว แนะนำให้เริ่มต้นด้วยการวิ่งเหยาะๆ จังหวะสบายๆ เพื่อปรับสภาพร่างกาย',
       tips: 'ไม่ต้องเร่งความเร็ว เน้นหายใจสบายๆ คุยเป็นประโยคได้',
     };
   }
+
+  // ปรับตามเป้าหมาย (Goal)
+  if (user?.goal === 'เพื่อสร้างหุ่น') {
+    return {
+      title: 'วิ่งโซน 2 เบิร์นไขมัน (Fat Burning Zone 2)',
+      activityType: 'easy_run',
+      targetDistanceKm: isBeginner ? 3.0 : 5.0,
+      targetPace: isBeginner ? '7:15 - 8:00' : '6:30 - 7:00',
+      rationale: 'การวิ่งต่อเนื่องที่ความหนักปานกลาง (โซน 2) จะดึงไขมันมาใช้เป็นพลังงานได้มีประสิทธิภาพสูงสุดเพื่อสร้างหุ่น',
+      tips: 'รักษาอัตราการเต้นหัวใจให้คงที่ สามารถพูดคุยได้โดยไม่หอบเหนื่อย',
+    };
+  }
+
+  if (user?.goal === 'เพื่อแข่งขัน') {
+    return {
+      title: isBeginner ? 'วิ่งจับจังหวะสม่ำเสมอ (Pace Rhythm Run)' : 'วิ่งพัฒนาความเร็วและคงทน (Tempo Progression)',
+      activityType: 'interval',
+      targetDistanceKm: isBeginner ? 4.0 : 6.0,
+      targetPace: isBeginner ? '6:30 - 7:00' : '5:45 - 6:15',
+      rationale: 'ฝึกซ้อมคุมเพซให้คงที่ เพื่อเตรียมพร้อมสำหรับการลงแข่งขันและเพิ่มความอึดของกล้ามเนื้อ',
+      tips: 'วอร์มอัพยืดเส้น 10 นาทีก่อนเริ่ม และคูลดาวน์ให้เพียงพอ',
+    };
+  }
+
   return {
     title: 'วิ่งเพื่อสร้างความคงทน (Aerobic Endurance Run)',
     activityType: 'easy_run',
-    targetDistanceKm: 5.0,
-    targetPace: '6:15 - 6:45',
-    rationale: 'ร่างกายของคุณอยู่ในสภาพพร้อมซ้อม ซ้อมระยะทางกำลังดีที่โซน 2 เพื่อเพิ่มความแข็งแรงของหัวใจ',
+    targetDistanceKm: isBeginner ? 3.0 : 5.0,
+    targetPace: isBeginner ? '7:00 - 7:45' : '6:15 - 6:45',
+    rationale: 'ร่างกายของคุณอยู่ในสภาพพร้อมซ้อม ซ้อมระยะทางกำลังดีที่โซน 2 เพื่อเพิ่มความแข็งแรงของหัวใจและสุขภาพโดยรวม',
     tips: 'วอร์มอัพ 5 นาที และคูลดาวน์หลังวิ่งเสร็จ',
   };
 }

@@ -11,6 +11,7 @@ import '../../widgets/map_attribution.dart';
 import '../../services/stats_service.dart';
 import '../../services/run_service.dart';
 import '../../services/coach_service.dart';
+import '../../services/language_controller.dart';
 import '../mood/mood_checkin_screen.dart';
 import '../coach/coach_chat_screen.dart';
 
@@ -101,12 +102,13 @@ class _TrackingScreenState extends State<TrackingScreen> {
       _errorMessage = null;
     });
 
+    final lang = LanguageController.instance;
     final serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
       setState(() {
         _checkingPermission = false;
         _errorMessage =
-            'กรุณาเปิด GPS/Location Service ของอุปกรณ์ก่อนเริ่มวิ่ง';
+            lang.text('กรุณาเปิด GPS/Location Service ของอุปกรณ์ก่อนเริ่มวิ่ง', 'Please enable GPS/Location Services on your device before starting.');
       });
       return;
     }
@@ -117,7 +119,7 @@ class _TrackingScreenState extends State<TrackingScreen> {
       if (permission == LocationPermission.denied) {
         setState(() {
           _checkingPermission = false;
-          _errorMessage = 'แอปต้องการสิทธิ์เข้าถึงตำแหน่งเพื่อบันทึกการวิ่ง';
+          _errorMessage = lang.text('แอปต้องการสิทธิ์เข้าถึงตำแหน่งเพื่อบันทึกการวิ่ง', 'The app requires location permission to record your run.');
         });
         return;
       }
@@ -126,7 +128,7 @@ class _TrackingScreenState extends State<TrackingScreen> {
       setState(() {
         _checkingPermission = false;
         _errorMessage =
-            'สิทธิ์ตำแหน่งถูกปฏิเสธถาวร กรุณาเปิดใน Settings ของอุปกรณ์';
+            lang.text('สิทธิ์ตำแหน่งถูกปฏิเสธถาวร กรุณาเปิดใน Settings ของอุปกรณ์', 'Location permission is permanently denied. Please enable it in Settings.');
       });
       return;
     }
@@ -140,7 +142,7 @@ class _TrackingScreenState extends State<TrackingScreen> {
         const Duration(seconds: 15),
         onTimeout: () {
           throw TimeoutException(
-              'รอสัญญาณ GPS นานเกินไป (ถ้าใช้ Emulator ต้องตั้งค่าตำแหน่งจำลองใน Extended Controls > Location ก่อน)');
+              lang.text('รอสัญญาณ GPS นานเกินไป (ถ้าใช้ Emulator ต้องตั้งค่าตำแหน่งจำลองใน Extended Controls > Location ก่อน)', 'Waiting for GPS signal timed out.'));
         },
       );
       // บันทึกจุดศูนย์กลางแผนที่เฉยๆ ยังไม่เพิ่มลง route เพราะจุดแรกมักคลาดเคลื่อนสูง
@@ -150,7 +152,7 @@ class _TrackingScreenState extends State<TrackingScreen> {
       setState(() {
         _checkingPermission = false;
         _errorMessage =
-            e is TimeoutException ? e.message : 'ไม่สามารถดึงตำแหน่งได้: $e';
+            e is TimeoutException ? e.message : lang.text('ไม่สามารถดึงตำแหน่งได้: $e', 'Unable to get location: $e');
       });
     }
   }
@@ -190,18 +192,19 @@ class _TrackingScreenState extends State<TrackingScreen> {
   }
 
   void _showOvertrainingDialog() {
+    final lang = LanguageController.instance;
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Row(
+        title: Row(
           children: [
-            Icon(Icons.warning_amber_rounded, color: Color(0xFFE82A2A)),
-            SizedBox(width: 8),
+            const Icon(Icons.warning_amber_rounded, color: Color(0xFFE82A2A)),
+            const SizedBox(width: 8),
             Expanded(
               child: Text(
-                'แจ้งเตือนเสี่ยงบาดเจ็บ',
-                style: TextStyle(
+                lang.text('แจ้งเตือนเสี่ยงบาดเจ็บ', 'Injury Risk Warning'),
+                style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
                     color: Color(0xFFC01C1C)),
@@ -215,8 +218,14 @@ class _TrackingScreenState extends State<TrackingScreen> {
           children: [
             Text(
               _coachAdvice?.overtrainingRisk == true
-                  ? 'สัปดาห์นี้ระยะทางวิ่งของคุณเพิ่มขึ้นเกินเกณฑ์ปลอดภัย 10%/สัปดาห์ การออกกำลังกายหนักต่อเนื่องอาจเพิ่มความเสี่ยงบาดเจ็บ'
-                  : 'ตรวจพบสัญญาณเหนื่อยล้าสะสมจากการเช็คอินย้อนหลังหลายครั้ง ร่างกายต้องการการพักฟื้นเพิ่มเติม',
+                  ? lang.text(
+                      'สัปดาห์นี้ระยะทางวิ่งของคุณเพิ่มขึ้นเกินเกณฑ์ปลอดภัย 10%/สัปดาห์ การออกกำลังกายหนักต่อเนื่องอาจเพิ่มความเสี่ยงบาดเจ็บ',
+                      'This week your distance increased beyond the safe 10%/week threshold. Heavy training may increase injury risk.',
+                    )
+                  : lang.text(
+                      'ตรวจพบสัญญาณเหนื่อยล้าสะสมจากการเช็คอินย้อนหลังหลายครั้ง ร่างกายต้องการการพักฟื้นเพิ่มเติม',
+                      'Persistent fatigue detected from recent check-ins. Your body requires more recovery time.',
+                    ),
               style: const TextStyle(fontSize: 13.5, height: 1.4),
             ),
             const SizedBox(height: 12),
@@ -226,9 +235,12 @@ class _TrackingScreenState extends State<TrackingScreen> {
                 color: const Color(0xFFFFF1F0),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: const Text(
-                '💡 คำแนะนำ: แนะนำให้วิ่งเพซสบายๆ หรือลดระยะทางในการวิ่งครั้งนี้ลง 20-30%',
-                style: TextStyle(
+              child: Text(
+                lang.text(
+                  '💡 คำแนะนำ: แนะนำให้วิ่งเพซสบายๆ หรือลดระยะทางในการวิ่งครั้งนี้ลง 20-30%',
+                  '💡 Advice: Run at an easy pace or reduce today’s distance by 20-30%',
+                ),
+                style: const TextStyle(
                     fontSize: 12,
                     color: Color(0xFF991B1B),
                     fontWeight: FontWeight.w600),
@@ -244,7 +256,7 @@ class _TrackingScreenState extends State<TrackingScreen> {
                 MaterialPageRoute(builder: (_) => const CoachChatScreen()),
               );
             },
-            child: const Text('ปรึกษา AI Coach'),
+            child: Text(lang.text('ปรึกษา AI Coach', 'Consult AI Coach')),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
@@ -256,7 +268,7 @@ class _TrackingScreenState extends State<TrackingScreen> {
               Navigator.pop(ctx);
               _startCountdown();
             },
-            child: const Text('รับทราบและเริ่มวิ่ง'),
+            child: Text(lang.text('รับทราบและเริ่มวิ่ง', 'Acknowledge & Start')),
           ),
         ],
       ),
@@ -480,27 +492,34 @@ class _TrackingScreenState extends State<TrackingScreen> {
 
     if (!mounted) return;
 
+    final lang = LanguageController.instance;
     final achievementLines = <String>[
       for (final b in result.newlyUnlockedBadges)
-        '${b.emoji} ปลดล็อกเหรียญ: ${b.title}',
+        lang.text('${b.emoji} ปลดล็อกเหรียญ: ${b.title}', '${b.emoji} Badge Unlocked: ${b.title}'),
       for (final m in result.newlyCompletedMissions)
-        '🎯 สำเร็จภารกิจ: ${m.title}',
+        lang.text('🎯 สำเร็จภารกิจ: ${m.title}', '🎯 Mission Completed: ${m.title}'),
     ];
 
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('จบการวิ่งแล้ว! 🎉'),
+        title: Text(lang.text('จบการวิ่งแล้ว! 🎉', 'Run Completed! 🎉')),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'ระยะทาง: ${distanceKm.toStringAsFixed(2)} กม.\n'
-              'เวลา: ${_formatTime(_seconds)}\n'
-              'เพซเฉลี่ย: ${_formatPace(paceMinPerKm)} /กม.\n'
-              '+${result.pointsEarned} แต้ม',
+              lang.text(
+                'ระยะทาง: ${distanceKm.toStringAsFixed(2)} กม.\n'
+                'เวลา: ${_formatTime(_seconds)}\n'
+                'เพซเฉลี่ย: ${_formatPace(paceMinPerKm)} /กม.\n'
+                '+${result.pointsEarned} แต้ม',
+                'Distance: ${distanceKm.toStringAsFixed(2)} ${lang.km}\n'
+                'Duration: ${_formatTime(_seconds)}\n'
+                'Avg Pace: ${_formatPace(paceMinPerKm)} ${lang.perKm}\n'
+                '+${result.pointsEarned} ${lang.pts}',
+              ),
             ),
             const SizedBox(height: 8),
             Row(
@@ -516,8 +535,11 @@ class _TrackingScreenState extends State<TrackingScreen> {
                 Expanded(
                   child: Text(
                     savedToServer
-                        ? 'บันทึกลงฐานข้อมูลเรียบร้อยแล้ว'
-                        : 'บันทึกลงฐานข้อมูลไม่สำเร็จ (เช็คว่า backend รันอยู่หรือไม่ — ข้อมูลนี้จะหายไปถ้าไม่บันทึกซ้ำ)',
+                        ? lang.text('บันทึกลงฐานข้อมูลเรียบร้อยแล้ว', 'Saved to database successfully')
+                        : lang.text(
+                            'บันทึกลงฐานข้อมูลไม่สำเร็จ (เช็คว่า backend รันอยู่หรือไม่ — ข้อมูลนี้จะหายไปถ้าไม่บันทึกซ้ำ)',
+                            'Failed to save to database (check backend)',
+                          ),
                     style: TextStyle(
                       fontSize: 11.5,
                       color: savedToServer ? AppColors.accent : Colors.orange,
@@ -557,7 +579,7 @@ class _TrackingScreenState extends State<TrackingScreen> {
               if (!mounted) return;
               Navigator.of(context).pop(); // กลับไปหน้าหลัก
             },
-            child: const Text('เสร็จสิ้น'),
+            child: Text(lang.text('เสร็จสิ้น', 'Finish')),
           ),
         ],
       ),
@@ -611,70 +633,73 @@ class _TrackingScreenState extends State<TrackingScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final topInset = MediaQuery.of(context).padding.top;
-    final bottomInset = MediaQuery.of(context).padding.bottom;
-    final screenHeight = MediaQuery.of(context).size.height;
+    return AnimatedBuilder(
+      animation: LanguageController.instance,
+      builder: (context, _) {
+        final lang = LanguageController.instance;
+        final topInset = MediaQuery.of(context).padding.top;
+        final bottomInset = MediaQuery.of(context).padding.bottom;
+        final screenHeight = MediaQuery.of(context).size.height;
 
-    return Scaffold(
-      backgroundColor: AppColors.secondary,
-      // ไม่ใช้ SafeArea ครอบทั้งจอ เพราะแผนที่ต้องเต็มขอบจอ (bleed ใต้ status bar)
-      // ปุ่ม/แบดจ์ลอยด้านบนจึงเผื่อ topInset เอง ส่วนตัว stage sheet เผื่อ bottomInset เอง
-      body: Stack(
-        children: [
-          Positioned.fill(child: _buildMapArea()),
-          Positioned(
-            top: topInset + 12,
-            left: 12,
-            child: _buildCloseButton(),
-          ),
-          if (_isRunning && !_isPaused)
-            Positioned(
-              top: topInset + 16,
-              right: 16,
-              child: _buildRecordingBadge(),
-            ),
-          if (!_checkingPermission && _errorMessage == null)
-            ValueListenableBuilder<double>(
-              valueListenable: _sheetExtentNotifier,
-              builder: (context, extent, _) {
-                // ให้ attribution/คำเตือน token ลอยอยู่เหนือขอบบนของ stage sheet เสมอ
-                final sheetTopY = screenHeight * (1 - extent);
-                final bottomOffset =
-                    (screenHeight - sheetTopY + 8).clamp(8.0, screenHeight);
-                return Positioned(
-                  right: 8,
-                  bottom: bottomOffset,
-                  child: const MapAttribution(),
-                );
-              },
-            ),
-          if (!_checkingPermission &&
-              _errorMessage == null &&
-              !MapConfig.hasValidToken)
-            Positioned(
-              left: 0,
-              right: 0,
-              bottom: screenHeight * (1 - _peekSize),
-              child: const MapTokenWarning(),
-            ),
-          _buildStageSheet(topInset, bottomInset, screenHeight),
-          Positioned.fill(
-            child: IgnorePointer(
-              ignoring: !_isCountingDown,
-              child: AnimatedOpacity(
-                opacity: _isCountingDown ? 1.0 : 0.0,
-                duration: const Duration(milliseconds: 150),
-                child: _buildCountdownOverlay(),
+        return Scaffold(
+          backgroundColor: AppColors.secondary,
+          body: Stack(
+            children: [
+              Positioned.fill(child: _buildMapArea(lang)),
+              Positioned(
+                top: topInset + 12,
+                left: 12,
+                child: _buildCloseButton(),
               ),
-            ),
+              if (_isRunning && !_isPaused)
+                Positioned(
+                  top: topInset + 16,
+                  right: 16,
+                  child: _buildRecordingBadge(lang),
+                ),
+              if (!_checkingPermission && _errorMessage == null)
+                ValueListenableBuilder<double>(
+                  valueListenable: _sheetExtentNotifier,
+                  builder: (context, extent, _) {
+                    final sheetTopY = screenHeight * (1 - extent);
+                    final bottomOffset =
+                        (screenHeight - sheetTopY + 8).clamp(8.0, screenHeight);
+                    return Positioned(
+                      right: 8,
+                      bottom: bottomOffset,
+                      child: const MapAttribution(),
+                    );
+                  },
+                ),
+              if (!_checkingPermission &&
+                  _errorMessage == null &&
+                  !MapConfig.hasValidToken)
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  bottom: screenHeight * (1 - _peekSize),
+                  child: const MapTokenWarning(),
+                ),
+              _buildStageSheet(topInset, bottomInset, screenHeight, lang),
+              Positioned.fill(
+                child: IgnorePointer(
+                  ignoring: !_isCountingDown,
+                  child: AnimatedOpacity(
+                    opacity: _isCountingDown ? 1.0 : 0.0,
+                    duration: const Duration(milliseconds: 150),
+                    child: _buildCountdownOverlay(lang),
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 
-  Widget _buildCountdownOverlay() {
-    final text = _countdownNumber > 0 ? '$_countdownNumber' : 'เริ่ม!';
+  Widget _buildCountdownOverlay(LanguageController lang) {
+    final text = _countdownNumber > 0 ? '$_countdownNumber' : lang.text('เริ่ม!', 'GO!');
     return Container(
       color: Colors.black.withValues(alpha: 0.85),
       alignment: Alignment.center,
@@ -691,7 +716,7 @@ class _TrackingScreenState extends State<TrackingScreen> {
           ),
           const SizedBox(height: 16),
           Text(
-            _countdownNumber > 0 ? 'เตรียมตัว...' : 'ลุยเลย!',
+            _countdownNumber > 0 ? lang.text('เตรียมตัว...', 'Get ready...') : lang.text('ลุยเลย!', "Let's Go!"),
             style: const TextStyle(
               color: Colors.white70,
               fontSize: 16,
@@ -703,7 +728,7 @@ class _TrackingScreenState extends State<TrackingScreen> {
     );
   }
 
-  Widget _buildMapArea() {
+  Widget _buildMapArea(LanguageController lang) {
     if (_checkingPermission) {
       return Center(
         child: CircularProgressIndicator(color: AppColors.accent),
@@ -728,7 +753,7 @@ class _TrackingScreenState extends State<TrackingScreen> {
               const SizedBox(height: 16),
               TextButton(
                 onPressed: _initLocation,
-                child: Text('ลองอีกครั้ง',
+                child: Text(lang.text('ลองอีกครั้ง', 'Try Again'),
                     style: TextStyle(color: AppColors.accent)),
               ),
             ],
@@ -838,7 +863,7 @@ class _TrackingScreenState extends State<TrackingScreen> {
     );
   }
 
-  Widget _buildRecordingBadge() {
+  Widget _buildRecordingBadge(LanguageController lang) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
@@ -850,7 +875,7 @@ class _TrackingScreenState extends State<TrackingScreen> {
         children: [
           Icon(Icons.circle, size: 8, color: AppColors.accent),
           const SizedBox(width: 6),
-          Text('กำลังบันทึก GPS จริง',
+          Text(lang.text('กำลังบันทึก GPS จริง', 'Live GPS Tracking'),
               style: TextStyle(color: AppColors.accent, fontSize: 11)),
         ],
       ),
@@ -859,7 +884,7 @@ class _TrackingScreenState extends State<TrackingScreen> {
 
   /// Stage sheet: ลอยทับแผนที่ ลากขึ้น-ลงได้ 2 ระดับ (peek / full) พร้อม snap
   Widget _buildStageSheet(
-      double topInset, double bottomInset, double screenHeight) {
+      double topInset, double bottomInset, double screenHeight, LanguageController lang) {
     return NotificationListener<DraggableScrollableNotification>(
       onNotification: (notification) {
         _sheetExtentNotifier.value = notification.extent;
@@ -896,8 +921,8 @@ class _TrackingScreenState extends State<TrackingScreen> {
                   final expanded = extent > _expandThreshold;
                   final minHeight = screenHeight * extent;
                   return expanded
-                      ? _buildExpandedContent(topInset, minHeight)
-                      : _buildPeekContent(bottomInset, minHeight);
+                      ? _buildExpandedContent(topInset, minHeight, lang)
+                      : _buildPeekContent(bottomInset, minHeight, lang);
                 },
               ),
             ),
@@ -907,7 +932,7 @@ class _TrackingScreenState extends State<TrackingScreen> {
     );
   }
 
-  Widget _buildExpandedContent(double topInset, double minHeight) {
+  Widget _buildExpandedContent(double topInset, double minHeight, LanguageController lang) {
     return SizedBox(
       height: minHeight,
       child: ValueListenableBuilder<int>(
@@ -946,7 +971,7 @@ class _TrackingScreenState extends State<TrackingScreen> {
     );
   }
 
-  Widget _buildPeekContent(double bottomInset, double minHeight) {
+  Widget _buildPeekContent(double bottomInset, double minHeight, LanguageController lang) {
     return Container(
       constraints: BoxConstraints(minHeight: minHeight),
       padding: EdgeInsets.fromLTRB(24, 12, 24, 20 + bottomInset),
@@ -959,7 +984,9 @@ class _TrackingScreenState extends State<TrackingScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                _isRunning ? 'วิ่ง' : 'พร้อมวิ่ง',
+                _isRunning
+                    ? lang.text('วิ่ง', 'Running')
+                    : lang.text('พร้อมวิ่ง', 'Ready to Run'),
                 style: const TextStyle(
                     color: Colors.white,
                     fontSize: 15,
@@ -969,7 +996,7 @@ class _TrackingScreenState extends State<TrackingScreen> {
                 onPressed: _expandSheet,
                 icon: const Icon(Icons.open_in_full_rounded,
                     color: Colors.white70, size: 18),
-                tooltip: 'ดูรายละเอียดเต็มจอ',
+                tooltip: lang.text('ดูรายละเอียดเต็มจอ', 'View full stats'),
                 visualDensity: VisualDensity.compact,
               ),
             ],
@@ -987,11 +1014,11 @@ class _TrackingScreenState extends State<TrackingScreen> {
                   return Row(
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
-                      _peekMetric(_formatTime(seconds), 'เวลา'),
+                      _peekMetric(_formatTime(seconds), lang.text('เวลา', 'Duration')),
                       _peekMetric(
-                          _formatPace(paceMinPerKm), 'ค่าเฉลี่ยช่วง (/กม.)'),
+                          _formatPace(paceMinPerKm), lang.text('ค่าเฉลี่ยช่วง (/กม.)', 'Split (${lang.perKm})')),
                       _peekMetric(
-                          distanceKm.toStringAsFixed(2), 'ระยะทาง (กม.)'),
+                          distanceKm.toStringAsFixed(2), lang.text('ระยะทาง (กม.)', 'Distance (${lang.km})')),
                     ],
                   );
                 },
@@ -1005,7 +1032,7 @@ class _TrackingScreenState extends State<TrackingScreen> {
             SizedBox(
               width: double.infinity,
               child: PrimaryButton(
-                label: 'เริ่มวิ่ง',
+                label: lang.text('เริ่มวิ่ง', 'Start Run'),
                 icon: Icons.play_arrow_rounded,
                 onPressed: _onStartPressed,
               ),
@@ -1031,7 +1058,9 @@ class _TrackingScreenState extends State<TrackingScreen> {
                         ),
                         const SizedBox(width: 6),
                         Text(
-                          _isPaused ? 'ต่อ' : 'พัก',
+                          _isPaused
+                              ? lang.text('ต่อ', 'Resume')
+                              : lang.text('พัก', 'Pause'),
                           style: const TextStyle(color: Colors.white),
                         ),
                       ],
@@ -1041,7 +1070,7 @@ class _TrackingScreenState extends State<TrackingScreen> {
                 const SizedBox(width: 12),
                 Expanded(
                   child: PrimaryButton(
-                    label: 'จบการวิ่ง',
+                    label: lang.text('จบการวิ่ง', 'Stop Run'),
                     icon: Icons.stop_rounded,
                     onPressed: _stop,
                   ),
@@ -1167,7 +1196,7 @@ class RunStatsView extends StatelessWidget {
                           onPressed: onCollapse,
                           icon: const Icon(Icons.close_fullscreen_rounded,
                               color: Colors.white70, size: 20),
-                          tooltip: 'ย่อกลับไปมุมมองแผนที่',
+                          tooltip: LanguageController.instance.text('ย่อกลับไปมุมมองแผนที่', 'Collapse to map view'),
                         ),
                         const SizedBox(width: 4),
                         Text(
@@ -1198,7 +1227,7 @@ class RunStatsView extends StatelessWidget {
                         ),
                         const SizedBox(height: 6),
                         Text(
-                          'ค่าเฉลี่ยช่วง (/กม.)',
+                          LanguageController.instance.text('ค่าเฉลี่ยช่วง (/กม.)', 'Split Pace (${LanguageController.instance.perKm})'),
                           style: TextStyle(
                             color: Colors.white.withValues(alpha: 0.55),
                             fontSize: 13,
@@ -1217,7 +1246,7 @@ class RunStatsView extends StatelessWidget {
                         ),
                         const SizedBox(height: 6),
                         Text(
-                          'ระยะทาง (กม.)',
+                          LanguageController.instance.text('ระยะทาง (กม.)', 'Distance (${LanguageController.instance.km})'),
                           style: TextStyle(
                             color: Colors.white.withValues(alpha: 0.55),
                             fontSize: 13,
@@ -1282,7 +1311,7 @@ class RunStatsView extends StatelessWidget {
                         color: Colors.white.withValues(alpha: 0.25), size: 32),
                     const SizedBox(height: 8),
                     Text(
-                      'เริ่มวิ่งเพื่อสะสมแท่งเพซรายกิโลเมตร',
+                      LanguageController.instance.text('เริ่มวิ่งเพื่อสะสมแท่งเพซรายกิโลเมตร', 'Start running to collect kilometer splits'),
                       style: TextStyle(
                         color: Colors.white.withValues(alpha: 0.4),
                         fontSize: 12.5,
@@ -1321,7 +1350,7 @@ class RunStatsView extends StatelessWidget {
                   fillRatio = fillRatio.clamp(0.25, 1.0);
 
                   return _SplitColumnBar(
-                    splitLabel: '${index + 1}',
+                    splitLabel: LanguageController.instance.text('กม. ${index + 1}', 'km ${index + 1}'),
                     paceLabel: _formatPace(pace),
                     isLive: isLive,
                     fillRatio: fillRatio,
@@ -1339,19 +1368,20 @@ class RunStatsView extends StatelessWidget {
     IconData icon;
     Color buttonColor;
     VoidCallback action;
+    final lang = LanguageController.instance;
 
     if (!isRunning) {
-      label = 'เริ่มวิ่ง';
+      label = lang.text('เริ่มวิ่ง', 'Start');
       icon = Icons.play_arrow_rounded;
       buttonColor = const Color(0xFFFF7A1A);
       action = onStart ?? onPauseResume;
     } else if (isPaused) {
-      label = 'ไปต่อ';
+      label = lang.text('ไปต่อ', 'Resume');
       icon = Icons.play_arrow_rounded;
       buttonColor = AppColors.accent;
       action = onPauseResume;
     } else {
-      label = 'หยุดชั่วคราว';
+      label = lang.text('หยุดชั่วคราว', 'Pause');
       icon = Icons.pause_rounded;
       buttonColor = const Color(0xFFFF7A1A);
       action = onPauseResume;

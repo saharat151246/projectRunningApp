@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
-
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import '../../theme/app_theme.dart';
 import '../../services/run_service.dart';
+import '../../services/language_controller.dart';
 import '../../config/map_config.dart';
 import '../../widgets/share_cards.dart';
 import '../../widgets/map_attribution.dart';
-
 
 /// หน้ารายละเอียดการวิ่งครั้งเดียว - แสดงเส้นทาง GPS จริงบนแผนที่ + สถิติครบ
 class RunDetailScreen extends StatefulWidget {
@@ -22,11 +21,6 @@ class _RunDetailScreenState extends State<RunDetailScreen> {
   RunDetail? _detail;
   bool _loading = true;
   bool _notFound = false;
-
-  static const _thaiMonths = [
-    'ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.',
-    'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'
-  ];
 
   @override
   void initState() {
@@ -46,10 +40,7 @@ class _RunDetailScreenState extends State<RunDetailScreen> {
   }
 
   String _formatDate(DateTime d) {
-    final buddhistYear = d.year + 543;
-    final time =
-        '${d.hour.toString().padLeft(2, '0')}:${d.minute.toString().padLeft(2, '0')}';
-    return '${d.day} ${_thaiMonths[d.month - 1]} $buddhistYear • $time น.';
+    return LanguageController.instance.formatDate(d);
   }
 
   String _formatDuration(int seconds) {
@@ -58,11 +49,11 @@ class _RunDetailScreenState extends State<RunDetailScreen> {
     return '$m:$s';
   }
 
-  String _formatPace(double? minPerKm) {
+  String _formatPace(double? minPerKm, LanguageController lang) {
     if (minPerKm == null || minPerKm <= 0) return '--:--';
     final m = minPerKm.floor();
     final s = ((minPerKm - m) * 60).round();
-    return '$m:${s.toString().padLeft(2, '0')} /กม.';
+    return '$m:${s.toString().padLeft(2, '0')} ${lang.perKm}';
   }
 
   String _mapsRouteUrl(RunDetail run) {
@@ -81,42 +72,56 @@ class _RunDetailScreenState extends State<RunDetailScreen> {
     }).toString();
   }
 
-  String _shareText(RunDetail run) {
+  String _shareText(RunDetail run, LanguageController lang) {
     final routeUrl = _mapsRouteUrl(run);
+    if (lang.isEnglish) {
+      return '''🏃 I just ran with RunMate!
+
+Distance: ${run.distanceKm.toStringAsFixed(2)} km
+Time: ${_formatDuration(run.durationSec)}
+Pace: ${_formatPace(run.avgPace, lang)}
+Date: ${_formatDate(run.startTime)}
+${routeUrl.isEmpty ? '' : '\nView Route: $routeUrl\n'}
+#RunMate #Running''';
+    }
     return '''🏃 ฉันเพิ่งวิ่งกับ RunMate!
 
 ระยะทาง ${run.distanceKm.toStringAsFixed(2)} กม.
 เวลา ${_formatDuration(run.durationSec)}
-เพซ ${_formatPace(run.avgPace)}
+เพซ ${_formatPace(run.avgPace, lang)}
 วันที่ ${_formatDate(run.startTime)}
 ${routeUrl.isEmpty ? '' : '\nดูเส้นทาง: $routeUrl\n'}
 #RunMate #Running''';
   }
 
   Future<void> _shareRun(BuildContext context, RunDetail run) async {
+    final lang = LanguageController.instance;
     if (run.route.length > 1) {
       final proceed = await showDialog<bool>(
         context: context,
         builder: (dialogContext) => AlertDialog(
-          title: const Text('แชร์ผลการวิ่ง'),
-          content: const Text(
-            'การ์ดรูปภาพนี้จะมีเส้นทางการวิ่ง ซึ่งอาจเปิดเผยจุดเริ่มต้นและจุดสิ้นสุดของคุณ',
+          title: Text(lang.text('แชร์ผลการวิ่ง', 'Share Run Result')),
+          content: Text(
+            lang.text(
+              'การ์ดรูปภาพนี้จะมีเส้นทางการวิ่ง ซึ่งอาจเปิดเผยจุดเริ่มต้นและจุดสิ้นสุดของคุณ',
+              'This image card includes the run route, which may reveal your start and end locations.',
+            ),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(dialogContext, false),
-              child: const Text('ยกเลิก'),
+              child: Text(lang.text('ยกเลิก', 'Cancel')),
             ),
             FilledButton(
               onPressed: () => Navigator.pop(dialogContext, true),
-              child: const Text('เลือกสไตล์การ์ด'),
+              child: Text(lang.text('เลือกสไตล์การ์ด', 'Choose Card Style')),
             ),
           ],
         ),
       );
-      if (proceed != true || !mounted) return;
+      if (proceed != true || !context.mounted) return;
     }
-    if (!mounted) return;
+    if (!context.mounted) return;
 
     await showModalBottomSheet(
       context: context,
@@ -125,30 +130,40 @@ ${routeUrl.isEmpty ? '' : '\nดูเส้นทาง: $routeUrl\n'}
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      builder: (_) => ShareCardPickerSheet(run: run, shareText: _shareText(run)),
+      builder: (_) => ShareCardPickerSheet(run: run, shareText: _shareText(run, lang)),
     );
   }
 
   Future<void> _confirmDeleteRun(BuildContext context) async {
+    final lang = LanguageController.instance;
+    final messenger = ScaffoldMessenger.of(context);
+    final nav = Navigator.of(context);
+
     final confirm = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Row(
+        title: Row(
           children: [
-            Icon(Icons.delete_outline_rounded, color: Color(0xFFE82A2A)),
-            SizedBox(width: 8),
-            Text('ลบประวัติการวิ่ง', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const Icon(Icons.delete_outline_rounded, color: Color(0xFFE82A2A)),
+            const SizedBox(width: 8),
+            Text(
+              lang.text('ลบประวัติการวิ่ง', 'Delete Run History'),
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
           ],
         ),
-        content: const Text(
-          'คุณต้องการลบรายการวิ่งนี้ใช่หรือไม่? ข้อมูลประวัติและสถิติของกิจกรรมนี้จะถูกลบออกจากระบบและไม่สามารถกู้คืนได้',
-          style: TextStyle(fontSize: 14, height: 1.4),
+        content: Text(
+          lang.text(
+            'คุณต้องการลบรายการวิ่งนี้ใช่หรือไม่? ข้อมูลประวัติและสถิติของกิจกรรมนี้จะถูกลบออกจากระบบและไม่สามารถกู้คืนได้',
+            'Are you sure you want to delete this run? The history and statistics of this activity will be permanently removed.',
+          ),
+          style: const TextStyle(fontSize: 14, height: 1.4),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, false),
-            child: Text('ยกเลิก', style: TextStyle(color: AppColors.textSecondary)),
+            child: Text(lang.text('ยกเลิก', 'Cancel'), style: TextStyle(color: AppColors.textSecondary)),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
@@ -157,7 +172,7 @@ ${routeUrl.isEmpty ? '' : '\nดูเส้นทาง: $routeUrl\n'}
               minimumSize: const Size(100, 44),
             ),
             onPressed: () => Navigator.pop(dialogContext, true),
-            child: const Text('ลบรายการ'),
+            child: Text(lang.text('ลบรายการ', 'Delete')),
           ),
         ],
       ),
@@ -165,71 +180,90 @@ ${routeUrl.isEmpty ? '' : '\nดูเส้นทาง: $routeUrl\n'}
 
     if (confirm != true || !mounted) return;
 
-    final messenger = ScaffoldMessenger.of(context);
-    final nav = Navigator.of(context);
     final result = await RunService.instance.deleteRun(widget.runId);
     if (!mounted) return;
 
     if (result.success) {
       messenger.showSnackBar(
-        const SnackBar(content: Text('ลบประวัติการวิ่งเรียบร้อยแล้ว')),
+        SnackBar(content: Text(lang.text('ลบประวัติการวิ่งเรียบร้อยแล้ว', 'Run history deleted successfully'))),
       );
       nav.pop(true);
     } else {
       messenger.showSnackBar(
-        SnackBar(content: Text(result.errorMessage ?? 'ไม่สามารถลบรายการได้')),
+        SnackBar(content: Text(result.errorMessage ?? lang.text('ไม่สามารถลบรายการได้', 'Failed to delete run'))),
       );
     }
   }
 
+  String _getMoodLabel(RunMood mood, LanguageController lang) {
+    if (lang.isEnglish) {
+      switch (mood) {
+        case RunMood.exhausted: return 'Exhausted';
+        case RunMood.veryTired: return 'Very Tired';
+        case RunMood.good: return 'Good';
+        case RunMood.great: return 'Great';
+        case RunMood.chill: return 'Chill';
+      }
+    }
+    return mood.label;
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(
-        backgroundColor: AppColors.background,
-        title: const Text('รายละเอียดการวิ่ง'),
-        actions: [
-          if (_detail != null) ...[
-            IconButton(
-              onPressed: () => _shareRun(context, _detail!),
-              icon: const Icon(Icons.ios_share_rounded),
-              tooltip: 'แชร์ผลการวิ่ง',
-            ),
-            IconButton(
-              onPressed: () => _confirmDeleteRun(context),
-              icon: const Icon(Icons.delete_outline_rounded, color: Color(0xFFE82A2A)),
-              tooltip: 'ลบประวัติการวิ่ง',
-            ),
-          ],
-        ],
-      ),
-      body: _loading
-          ? Center(child: CircularProgressIndicator(color: AppColors.primary))
-          : _notFound
-              ? _buildNotFound()
-              : _buildContent(_detail!),
+    return AnimatedBuilder(
+      animation: LanguageController.instance,
+      builder: (context, _) {
+        final lang = LanguageController.instance;
+
+        return Scaffold(
+          backgroundColor: AppColors.background,
+          appBar: AppBar(
+            backgroundColor: AppColors.background,
+            title: Text(lang.text('รายละเอียดการวิ่ง', 'Run Details')),
+            actions: [
+              if (_detail != null) ...[
+                IconButton(
+                  onPressed: () => _shareRun(context, _detail!),
+                  icon: const Icon(Icons.ios_share_rounded),
+                  tooltip: lang.text('แชร์ผลการวิ่ง', 'Share run result'),
+                ),
+                IconButton(
+                  onPressed: () => _confirmDeleteRun(context),
+                  icon: const Icon(Icons.delete_outline_rounded, color: Color(0xFFE82A2A)),
+                  tooltip: lang.text('ลบประวัติการวิ่ง', 'Delete run history'),
+                ),
+              ],
+            ],
+          ),
+          body: _loading
+              ? Center(child: CircularProgressIndicator(color: AppColors.primary))
+              : _notFound
+                  ? _buildNotFound(lang)
+                  : _buildContent(_detail!, lang),
+        );
+      },
     );
   }
 
-  Widget _buildNotFound() {
+  Widget _buildNotFound(LanguageController lang) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(Icons.error_outline_rounded, color: AppColors.textSecondary, size: 40),
           const SizedBox(height: 12),
-          Text('ไม่พบข้อมูลการวิ่งนี้',
-              style: TextStyle(color: AppColors.textSecondary)),
+          Text(
+            lang.text('ไม่พบข้อมูลการวิ่งนี้', 'Run data not found'),
+            style: TextStyle(color: AppColors.textSecondary),
+          ),
           const SizedBox(height: 16),
-          TextButton(onPressed: _load, child: const Text('ลองอีกครั้ง')),
+          TextButton(onPressed: _load, child: Text(lang.text('ลองอีกครั้ง', 'Try Again'))),
         ],
       ),
     );
   }
 
-  Widget _buildContent(RunDetail run) {
+  Widget _buildContent(RunDetail run, LanguageController lang) {
     final hasRoute = run.route.length > 1;
     final calories = (run.distanceKm * 62).toStringAsFixed(0);
 
@@ -302,8 +336,10 @@ ${routeUrl.isEmpty ? '' : '\nดูเส้นทาง: $routeUrl\n'}
                       children: [
                         Icon(Icons.map_outlined, color: Colors.white.withValues(alpha: 0.2), size: 40),
                         const SizedBox(height: 8),
-                        Text('ไม่มีข้อมูลเส้นทาง GPS สำหรับการวิ่งนี้',
-                            style: TextStyle(color: Colors.white.withValues(alpha: 0.4), fontSize: 12)),
+                        Text(
+                          lang.text('ไม่มีข้อมูลเส้นทาง GPS สำหรับการวิ่งนี้', 'No GPS route data for this run'),
+                          style: TextStyle(color: Colors.white.withValues(alpha: 0.4), fontSize: 12),
+                        ),
                       ],
                     ),
                   ),
@@ -315,9 +351,14 @@ ${routeUrl.isEmpty ? '' : '\nดูเส้นทาง: $routeUrl\n'}
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(_formatDate(run.startTime),
-                  style: TextStyle(
-                      fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+              Text(
+                _formatDate(run.startTime),
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary,
+                ),
+              ),
               const SizedBox(height: 20),
 
               // สถิติหลัก
@@ -326,16 +367,16 @@ ${routeUrl.isEmpty ? '' : '\nดูเส้นทาง: $routeUrl\n'}
                   Expanded(
                     child: _StatBlock(
                       icon: Icons.map_outlined,
-                      label: 'ระยะทาง',
+                      label: lang.text('ระยะทาง', 'Distance'),
                       value: run.distanceKm.toStringAsFixed(2),
-                      unit: 'กม.',
+                      unit: lang.km,
                       color: AppColors.primary,
                     ),
                   ),
                   Expanded(
                     child: _StatBlock(
                       icon: Icons.timer_outlined,
-                      label: 'เวลา',
+                      label: lang.text('เวลา', 'Duration'),
                       value: _formatDuration(run.durationSec),
                       unit: '',
                       color: AppColors.secondary,
@@ -349,8 +390,8 @@ ${routeUrl.isEmpty ? '' : '\nดูเส้นทาง: $routeUrl\n'}
                   Expanded(
                     child: _StatBlock(
                       icon: Icons.speed_rounded,
-                      label: 'เพซเฉลี่ย',
-                      value: _formatPace(run.avgPace),
+                      label: lang.text('เพซเฉลี่ย', 'Avg Pace'),
+                      value: _formatPace(run.avgPace, lang),
                       unit: '',
                       color: AppColors.accent,
                     ),
@@ -358,9 +399,9 @@ ${routeUrl.isEmpty ? '' : '\nดูเส้นทาง: $routeUrl\n'}
                   Expanded(
                     child: _StatBlock(
                       icon: Icons.local_fire_department_rounded,
-                      label: 'แคลอรี่',
+                      label: lang.text('แคลอรี่', 'Calories'),
                       value: calories,
-                      unit: 'kcal',
+                      unit: lang.kcal,
                       color: AppColors.gold,
                     ),
                   ),
@@ -378,9 +419,10 @@ ${routeUrl.isEmpty ? '' : '\nดูเส้นทาง: $routeUrl\n'}
                     borderRadius: BorderRadius.circular(16),
                     boxShadow: [
                       BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.03),
-                          blurRadius: 8,
-                          offset: const Offset(0, 3)),
+                        color: Colors.black.withValues(alpha: 0.03),
+                        blurRadius: 8,
+                        offset: const Offset(0, 3),
+                      ),
                     ],
                   ),
                   child: Column(
@@ -390,9 +432,16 @@ ${routeUrl.isEmpty ? '' : '\nดูเส้นทาง: $routeUrl\n'}
                         children: [
                           Text(run.mood!.emoji, style: const TextStyle(fontSize: 24)),
                           const SizedBox(width: 10),
-                          Text('รู้สึก${run.mood!.label}หลังวิ่งครั้งนี้',
-                              style: const TextStyle(
-                                  fontWeight: FontWeight.w700, fontSize: 13.5)),
+                          Text(
+                            lang.text(
+                              'รู้สึก${run.mood!.label}หลังวิ่งครั้งนี้',
+                              'Felt ${_getMoodLabel(run.mood!, lang)} after this run',
+                            ),
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 13.5,
+                            ),
+                          ),
                         ],
                       ),
                       if (run.note != null && run.note!.isNotEmpty) ...[
@@ -400,7 +449,10 @@ ${routeUrl.isEmpty ? '' : '\nดูเส้นทาง: $routeUrl\n'}
                         Text(
                           run.note!,
                           style: TextStyle(
-                              fontSize: 12.5, color: AppColors.textSecondary, height: 1.5),
+                            fontSize: 12.5,
+                            color: AppColors.textSecondary,
+                            height: 1.5,
+                          ),
                         ),
                       ],
                     ],
@@ -414,7 +466,7 @@ ${routeUrl.isEmpty ? '' : '\nดูเส้นทาง: $routeUrl\n'}
                 child: OutlinedButton.icon(
                   onPressed: () => _shareRun(context, run),
                   icon: const Icon(Icons.share_rounded),
-                  label: const Text('แชร์การ์ดผลการวิ่ง'),
+                  label: Text(lang.text('แชร์การ์ดผลการวิ่ง', 'Share Run Card')),
                 ),
               ),
 
@@ -424,15 +476,22 @@ ${routeUrl.isEmpty ? '' : '\nดูเส้นทาง: $routeUrl\n'}
                 child: TextButton.icon(
                   onPressed: () => _confirmDeleteRun(context),
                   icon: const Icon(Icons.delete_outline_rounded, color: Color(0xFFE82A2A), size: 20),
-                  label: const Text('ลบประวัติการวิ่งนี้',
-                      style: TextStyle(color: Color(0xFFE82A2A), fontWeight: FontWeight.w600)),
+                  label: Text(
+                    lang.text('ลบประวัติการวิ่งนี้', 'Delete This Run'),
+                    style: const TextStyle(color: Color(0xFFE82A2A), fontWeight: FontWeight.w600),
+                  ),
                 ),
               ),
 
               if (hasRoute) ...[
                 const SizedBox(height: 24),
-                Text('บันทึกพิกัดทั้งหมด ${run.route.length} จุด',
-                    style: TextStyle(fontSize: 11.5, color: AppColors.textSecondary)),
+                Text(
+                  lang.text(
+                    'บันทึกพิกัดทั้งหมด ${run.route.length} จุด',
+                    'Recorded ${run.route.length} GPS points in total',
+                  ),
+                  style: TextStyle(fontSize: 11.5, color: AppColors.textSecondary),
+                ),
               ],
             ],
           ),
@@ -478,9 +537,14 @@ class _StatBlock extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.baseline,
             textBaseline: TextBaseline.alphabetic,
             children: [
-              Text(value,
-                  style: TextStyle(
-                      fontSize: 18, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
+              Text(
+                value,
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.textPrimary,
+                ),
+              ),
               if (unit.isNotEmpty) ...[
                 const SizedBox(width: 3),
                 Text(unit, style: TextStyle(fontSize: 11, color: AppColors.textSecondary)),

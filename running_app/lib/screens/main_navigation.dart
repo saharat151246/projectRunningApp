@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
+import '../services/language_controller.dart';
 import 'home/home_screen.dart';
 import 'tracking/tracking_screen.dart';
 import 'dashboard/dashboard_screen.dart';
@@ -42,6 +43,10 @@ class _MainNavigationState extends State<MainNavigation> {
 
   @override
   Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: LanguageController.instance,
+      builder: (context, _) {
+    final lang = LanguageController.instance;
     return Stack(
       children: [
         Scaffold(
@@ -87,11 +92,11 @@ class _MainNavigationState extends State<MainNavigation> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  _navItem(0, Icons.home_rounded, 'หน้าหลัก'),
-                  _navItem(1, Icons.bar_chart_rounded, 'สถิติ'),
+                  _navItem(0, Icons.home_rounded, lang.text('หน้าหลัก', 'Home')),
+                  _navItem(1, Icons.bar_chart_rounded, lang.text('สถิติ', 'Stats')),
                   const SizedBox(width: 48), // เว้นที่ให้ FAB
-                  _navItem(3, Icons.emoji_events_rounded, 'ภารกิจ'),
-                  _navItem(4, Icons.person_rounded, 'โปรไฟล์'),
+                  _navItem(3, Icons.emoji_events_rounded, lang.text('ภารกิจ', 'Missions')),
+                  _navItem(4, Icons.person_rounded, lang.text('โปรไฟล์', 'Profile')),
                 ],
               ),
             ),
@@ -99,6 +104,8 @@ class _MainNavigationState extends State<MainNavigation> {
         ),
         const CoachChatPopup(),
       ],
+    );
+      },
     );
   }
 

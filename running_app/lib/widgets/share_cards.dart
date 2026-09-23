@@ -10,23 +10,25 @@ import 'package:share_plus/share_plus.dart';
 import '../models/run_model.dart';
 import '../theme/app_theme.dart';
 import '../config/map_config.dart';
+import '../services/language_controller.dart';
 import 'map_attribution.dart';
 
-/// สไตล์การ์ดที่แชร์ได้ - เพิ่มสไตล์ใหม่ในอนาคตแค่เพิ่ม enum + widget แล้วต่อใน
-/// [ShareCardPickerSheet._cardFor]
+/// สไตล์การ์ดที่แชร์ได้
 enum ShareCardStyle {
-  minimalDark('มินิมอล', Icons.crop_din_rounded),
-  mapBackground('พื้นหลังแผนที่', Icons.map_rounded),
-  transparentOverlay('โปร่งใส (วางทับรูป)', Icons.layers_outlined),
-  gradientBold('ไล่สีสด', Icons.auto_awesome_rounded);
+  minimalDark('มินิมอล', 'Minimal Dark', Icons.crop_din_rounded),
+  mapBackground('พื้นหลังแผนที่', 'Map Background', Icons.map_rounded),
+  transparentOverlay('โปร่งใส (วางทับรูป)', 'Transparent Overlay', Icons.layers_outlined),
+  gradientBold('ไล่สีสด', 'Vibrant Gradient', Icons.auto_awesome_rounded);
 
-  final String label;
+  final String labelTh;
+  final String labelEn;
   final IconData icon;
-  const ShareCardStyle(this.label, this.icon);
+  const ShareCardStyle(this.labelTh, this.labelEn, this.icon);
+
+  String getLabel(LanguageController lang) => lang.text(labelTh, labelEn);
 }
 
 /// ขนาดอ้างอิงของการ์ด (สัดส่วน 9:16 แบบ Instagram Story)
-/// ตอน capture จะใช้ pixelRatio 3 ทำให้ได้ไฟล์จริงขนาด 1080x1920
 const double kShareCardDesignWidth = 360;
 const double kShareCardDesignHeight = 640;
 
@@ -50,7 +52,6 @@ String _durationLabelTh(int seconds) {
 }
 
 /// จับภาพ widget ใดๆ เป็น PNG โดยไม่ต้องแสดงบนจอจริง
-/// (แทรกไว้นอกขอบเขตจอผ่าน Overlay แล้วรอเฟรม/ไทล์แผนที่โหลดก่อน capture)
 Future<Uint8List> captureShareCard(BuildContext context, Widget card) async {
   final key = GlobalKey();
   final overlay = Overlay.of(context, rootOverlay: true);
@@ -66,18 +67,17 @@ Future<Uint8List> captureShareCard(BuildContext context, Widget card) async {
   );
   overlay.insert(entry);
   try {
-    // รอให้ layout เสร็จ + ให้เวลาไทล์แผนที่ (ภาพจากเน็ต) โหลดก่อน capture
     await WidgetsBinding.instance.endOfFrame;
     await WidgetsBinding.instance.endOfFrame;
     await Future.delayed(const Duration(milliseconds: 900));
 
     final renderObject = key.currentContext?.findRenderObject();
     if (renderObject is! RenderRepaintBoundary) {
-      throw StateError('ไม่สามารถสร้างภาพสำหรับแชร์ได้');
+      throw StateError('Unable to generate image for sharing');
     }
     final image = await renderObject.toImage(pixelRatio: 3.0);
     final bytes = await image.toByteData(format: ui.ImageByteFormat.png);
-    if (bytes == null) throw StateError('ไม่สามารถสร้างภาพสำหรับแชร์ได้');
+    if (bytes == null) throw StateError('Unable to generate image for sharing');
     return bytes.buffer.asUint8List();
   } finally {
     entry.remove();
@@ -162,8 +162,7 @@ class _StatLine extends StatelessWidget {
 }
 
 class _BrandMark extends StatelessWidget {
-  final Color? textColor;
-  const _BrandMark({this.textColor});
+  const _BrandMark();
 
   @override
   Widget build(BuildContext context) {
@@ -181,15 +180,15 @@ class _BrandMark extends StatelessWidget {
           child: const Icon(Icons.directions_run_rounded, size: 12, color: Colors.white),
         ),
         const SizedBox(width: 6),
-        Text('RunMate',
+        const Text('RunMate',
             style: TextStyle(
-                color: textColor ?? Colors.white, fontSize: 14, fontWeight: FontWeight.w800, letterSpacing: 0.3)),
+                color: Colors.white, fontSize: 14, fontWeight: FontWeight.w800, letterSpacing: 0.3)),
       ],
     );
   }
 }
 
-/// สไตล์ที่ 1: การ์ดมินิมอลพื้นดำ เน้นตัวเลข (ของเดิม ปรับสัดส่วนเป็น 9:16)
+/// สไตล์ที่ 1: การ์ดมินิมอลพื้นดำ เน้นตัวเลข
 class MinimalShareCard extends StatelessWidget {
   final RunDetail run;
   const MinimalShareCard({super.key, required this.run});
@@ -197,6 +196,8 @@ class MinimalShareCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final hasRoute = run.route.length > 1;
+    final lang = LanguageController.instance;
+
     return Container(
       width: kShareCardDesignWidth,
       height: kShareCardDesignHeight,
@@ -205,9 +206,9 @@ class MinimalShareCard extends StatelessWidget {
       child: Column(
         children: [
           const SizedBox(height: 48),
-          _StatLine(label: 'DISTANCE', value: '${run.distanceKm.toStringAsFixed(2)} km'),
+          _StatLine(label: 'DISTANCE', value: '${run.distanceKm.toStringAsFixed(2)} ${lang.km}'),
           const SizedBox(height: 22),
-          _StatLine(label: 'PACE', value: '${_paceLabel(run.avgPace)} /km'),
+          _StatLine(label: 'PACE', value: '${_paceLabel(run.avgPace)} ${lang.perKm}'),
           const SizedBox(height: 22),
           _StatLine(label: 'TIME', value: _durationLabel(run.durationSec)),
           const SizedBox(height: 28),
@@ -234,8 +235,7 @@ class MinimalShareCard extends StatelessWidget {
   }
 }
 
-/// สไตล์ที่ 2: การ์ดพื้นหลังแผนที่จริง (สไตล์ Strava) ใช้ FlutterMap ครอบเต็มการ์ด
-/// แล้ววางสถิติทับด้วย gradient scrim ให้อ่านง่าย
+/// สไตล์ที่ 2: การ์ดพื้นหลังแผนที่จริง
 class MapShareCard extends StatelessWidget {
   final RunDetail run;
   const MapShareCard({super.key, required this.run});
@@ -243,6 +243,8 @@ class MapShareCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final hasRoute = run.route.length > 1;
+    final lang = LanguageController.instance;
+
     return Container(
       width: kShareCardDesignWidth,
       height: kShareCardDesignHeight,
@@ -292,7 +294,6 @@ class MapShareCard extends StatelessWidget {
                   color: Colors.white.withValues(alpha: 0.2), size: 40),
             ),
 
-          // scrim บน-ล่างให้ตัวหนังสืออ่านง่ายบนพื้นแผนที่
           Positioned.fill(
             child: DecoratedBox(
               decoration: BoxDecoration(
@@ -320,9 +321,9 @@ class MapShareCard extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                _MapStat('ระยะทาง', '${run.distanceKm.toStringAsFixed(2)} กม.'),
-                _MapStat('เพซ', '${_paceLabel(run.avgPace)} /กม.'),
-                _MapStat('เวลา', _durationLabelTh(run.durationSec)),
+                _MapStat(lang.text('ระยะทาง', 'Distance'), '${run.distanceKm.toStringAsFixed(2)} ${lang.km}'),
+                _MapStat(lang.text('เพซ', 'Pace'), '${_paceLabel(run.avgPace)} ${lang.perKm}'),
+                _MapStat(lang.text('เวลา', 'Time'), lang.isEnglish ? _durationLabel(run.durationSec) : _durationLabelTh(run.durationSec)),
               ],
             ),
           ),
@@ -335,9 +336,7 @@ class MapShareCard extends StatelessWidget {
   }
 }
 
-/// สไตล์ที่ 3: การ์ด "โปร่งใส" — ไม่มีสีพื้นหลังเลย (ไม่ตั้งค่า color/gradient ใดๆ)
-/// ตอน capture เป็น PNG จะได้พื้นหลังโปร่งใสจริง เอาไปวางทับรูปถ่าย/สตอรี่ของตัวเองได้เลย
-/// เหลือแค่เส้นทางวิ่ง + สถิติในกรอบทึบแสงบางส่วน ให้ยังอ่านง่ายบนรูปพื้นหลังอะไรก็ได้
+/// สไตล์ที่ 3: การ์ด "โปร่งใส"
 class TransparentOverlayShareCard extends StatelessWidget {
   final RunDetail run;
   const TransparentOverlayShareCard({super.key, required this.run});
@@ -345,10 +344,11 @@ class TransparentOverlayShareCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final hasRoute = run.route.length > 1;
+    final lang = LanguageController.instance;
+
     return SizedBox(
       width: kShareCardDesignWidth,
       height: kShareCardDesignHeight,
-      // สำคัญ: ไม่มี Container(color: ...) ครอบ เพื่อให้พื้นหลังโปร่งใสตอน export
       child: Stack(
         children: [
           const Positioned(top: 40, left: 0, right: 0, child: Center(child: _BrandMark())),
@@ -384,9 +384,9 @@ class TransparentOverlayShareCard extends StatelessWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  _MapStat('ระยะทาง', '${run.distanceKm.toStringAsFixed(2)} กม.'),
-                  _MapStat('เพซ', '${_paceLabel(run.avgPace)} /กม.'),
-                  _MapStat('เวลา', _durationLabelTh(run.durationSec)),
+                  _MapStat(lang.text('ระยะทาง', 'Distance'), '${run.distanceKm.toStringAsFixed(2)} ${lang.km}'),
+                  _MapStat(lang.text('เพซ', 'Pace'), '${_paceLabel(run.avgPace)} ${lang.perKm}'),
+                  _MapStat(lang.text('เวลา', 'Time'), lang.isEnglish ? _durationLabel(run.durationSec) : _durationLabelTh(run.durationSec)),
                 ],
               ),
             ),
@@ -405,6 +405,8 @@ class GradientBoldShareCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final hasRoute = run.route.length > 1;
+    final lang = LanguageController.instance;
+
     return Container(
       width: kShareCardDesignWidth,
       height: kShareCardDesignHeight,
@@ -426,7 +428,7 @@ class GradientBoldShareCard extends StatelessWidget {
                 color: Colors.white, fontSize: 84, fontWeight: FontWeight.w900, height: 1),
           ),
           const SizedBox(height: 4),
-          Text('กิโลเมตร',
+          Text(lang.text('กิโลเมตร', 'KILOMETERS'),
               style: TextStyle(
                   color: Colors.white.withValues(alpha: 0.85),
                   fontSize: 13,
@@ -436,8 +438,8 @@ class GradientBoldShareCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              _StatLine(label: 'เพซเฉลี่ย', value: '${_paceLabel(run.avgPace)}/กม.'),
-              _StatLine(label: 'เวลา', value: _durationLabelTh(run.durationSec)),
+              _StatLine(label: lang.text('เพซเฉลี่ย', 'AVG PACE'), value: '${_paceLabel(run.avgPace)} ${lang.perKm}'),
+              _StatLine(label: lang.text('เวลา', 'TIME'), value: lang.isEnglish ? _durationLabel(run.durationSec) : _durationLabelTh(run.durationSec)),
             ],
           ),
           const SizedBox(height: 24),
@@ -462,7 +464,6 @@ class GradientBoldShareCard extends StatelessWidget {
 }
 
 /// พื้นหลังตาราง checkerboard เอาไว้ preview การ์ดสไตล์โปร่งใสในชีทเลือกสไตล์
-/// ให้เห็นชัดว่าส่วนไหนโปร่งใสจริง (ไม่ได้ export ไปกับรูป แค่ใช้ตอน preview เท่านั้น)
 class _CheckerboardBackground extends StatelessWidget {
   final Widget child;
   const _CheckerboardBackground({required this.child});
@@ -519,7 +520,7 @@ class _MapStat extends StatelessWidget {
   }
 }
 
-/// Bottom sheet ให้ผู้ใช้เลือกสไตล์การ์ด (สไลด์ดูตัวอย่างแบบ Strava) ก่อนกดแชร์จริง
+/// Bottom sheet ให้ผู้ใช้เลือกสไตล์การ์ด
 class ShareCardPickerSheet extends StatefulWidget {
   final RunDetail run;
   final String shareText;
@@ -550,6 +551,7 @@ class _ShareCardPickerSheetState extends State<ShareCardPickerSheet> {
   }
 
   Future<void> _share() async {
+    final lang = LanguageController.instance;
     setState(() => _sharing = true);
     try {
       final card = _cardFor(_styles[_index]);
@@ -559,7 +561,7 @@ class _ShareCardPickerSheetState extends State<ShareCardPickerSheet> {
       await SharePlus.instance.share(
         ShareParams(
           text: widget.shareText,
-          subject: 'ผลการวิ่งจาก RunMate',
+          subject: lang.text('ผลการวิ่งจาก RunMate', 'Run Results from RunMate'),
           files: [XFile.fromData(bytes, mimeType: 'image/png')],
           fileNameOverrides: ['runmate-${widget.run.id}.png'],
           sharePositionOrigin:
@@ -570,7 +572,7 @@ class _ShareCardPickerSheetState extends State<ShareCardPickerSheet> {
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('ไม่สามารถสร้างการ์ดสำหรับแชร์ได้')),
+          SnackBar(content: Text(lang.text('ไม่สามารถสร้างการ์ดสำหรับแชร์ได้', 'Unable to create share card'))),
         );
       }
     } finally {
@@ -586,100 +588,111 @@ class _ShareCardPickerSheetState extends State<ShareCardPickerSheet> {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      top: false,
-      child: Padding(
-        padding: const EdgeInsets.only(top: 12, bottom: 20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                  color: Colors.grey.shade300, borderRadius: BorderRadius.circular(2)),
-            ),
-            const SizedBox(height: 16),
-            Text('เลือกสไตล์การ์ดที่จะแชร์',
-                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16, color: AppColors.textPrimary)),
-            const SizedBox(height: 16),
-            SizedBox(
-              height: 440,
-              child: PageView.builder(
-                controller: _pageController,
-                itemCount: _styles.length,
-                onPageChanged: (i) => setState(() => _index = i),
-                itemBuilder: (context, i) {
-                  final style = _styles[i];
-                  final isTransparent = style == ShareCardStyle.transparentOverlay;
-                  Widget preview = FittedBox(
-                    fit: BoxFit.contain,
-                    child: SizedBox(
-                      width: kShareCardDesignWidth,
-                      height: kShareCardDesignHeight,
-                      child: _cardFor(style),
-                    ),
-                  );
-                  // การ์ดสไตล์โปร่งใสไม่มีพื้นหลัง -> ใส่ลายตารางหมากรุกไว้ตอน preview
-                  // เท่านั้น ให้ผู้ใช้เห็นว่าโปร่งใสจริง (ไม่ถูกนำไป export ไปกับรูป)
-                  if (isTransparent) {
-                    preview = _CheckerboardBackground(child: preview);
-                  }
-                  return Center(
-                    child: AspectRatio(
-                      aspectRatio: kShareCardDesignWidth / kShareCardDesignHeight,
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(20),
-                        child: preview,
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
-            const SizedBox(height: 14),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(_styles.length, (i) {
-                final active = i == _index;
-                return AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  margin: const EdgeInsets.symmetric(horizontal: 4),
-                  width: active ? 20 : 6,
-                  height: 6,
+    return AnimatedBuilder(
+      animation: LanguageController.instance,
+      builder: (context, _) {
+        final lang = LanguageController.instance;
+
+        return SafeArea(
+          top: false,
+          child: Padding(
+            padding: const EdgeInsets.only(top: 12, bottom: 20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 40,
+                  height: 4,
                   decoration: BoxDecoration(
-                    color: active ? AppColors.primary : Colors.grey.shade300,
-                    borderRadius: BorderRadius.circular(3),
-                  ),
-                );
-              }),
-            ),
-            const SizedBox(height: 6),
-            Text(_styles[_index].label,
-                style: TextStyle(
-                    color: AppColors.textSecondary, fontSize: 12.5, fontWeight: FontWeight.w600)),
-            const SizedBox(height: 18),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: FilledButton.icon(
-                  onPressed: _sharing ? null : _share,
-                  icon: _sharing
-                      ? const SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                        )
-                      : const Icon(Icons.ios_share_rounded),
-                  label: Text(_sharing ? 'กำลังสร้างการ์ด...' : 'แชร์การ์ดนี้'),
+                      color: Colors.grey.shade300, borderRadius: BorderRadius.circular(2)),
                 ),
-              ),
+                const SizedBox(height: 16),
+                Text(
+                  lang.text('เลือกสไตล์การ์ดที่จะแชร์', 'Choose Share Card Style'),
+                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16, color: AppColors.textPrimary),
+                ),
+                const SizedBox(height: 16),
+                SizedBox(
+                  height: 440,
+                  child: PageView.builder(
+                    controller: _pageController,
+                    itemCount: _styles.length,
+                    onPageChanged: (i) => setState(() => _index = i),
+                    itemBuilder: (context, i) {
+                      final style = _styles[i];
+                      final isTransparent = style == ShareCardStyle.transparentOverlay;
+                      Widget preview = FittedBox(
+                        fit: BoxFit.contain,
+                        child: SizedBox(
+                          width: kShareCardDesignWidth,
+                          height: kShareCardDesignHeight,
+                          child: _cardFor(style),
+                        ),
+                      );
+                      if (isTransparent) {
+                        preview = _CheckerboardBackground(child: preview);
+                      }
+                      return Center(
+                        child: AspectRatio(
+                          aspectRatio: kShareCardDesignWidth / kShareCardDesignHeight,
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(20),
+                            child: preview,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                const SizedBox(height: 14),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: List.generate(_styles.length, (i) {
+                    final active = i == _index;
+                    return AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      margin: const EdgeInsets.symmetric(horizontal: 4),
+                      width: active ? 20 : 6,
+                      height: 6,
+                      decoration: BoxDecoration(
+                        color: active ? AppColors.primary : Colors.grey.shade300,
+                        borderRadius: BorderRadius.circular(3),
+                      ),
+                    );
+                  }),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  _styles[_index].getLabel(lang),
+                  style: TextStyle(
+                      color: AppColors.textSecondary, fontSize: 12.5, fontWeight: FontWeight.w600),
+                ),
+                const SizedBox(height: 18),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: SizedBox(
+                    width: double.infinity,
+                    height: 50,
+                    child: FilledButton.icon(
+                      onPressed: _sharing ? null : _share,
+                      icon: _sharing
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                            )
+                          : const Icon(Icons.ios_share_rounded),
+                      label: Text(_sharing
+                          ? lang.text('กำลังสร้างการ์ด...', 'Generating card...')
+                          : lang.text('แชร์การ์ดนี้', 'Share this Card')),
+                    ),
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 }

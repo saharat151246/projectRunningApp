@@ -73,34 +73,64 @@ class PrimaryButton extends StatelessWidget {
   }
 }
 
-/// ปุ่ม Social Login (Google) - UI เท่านั้น ยังไม่ต่อระบบจริง
+/// ปุ่ม Social Login (Google)
 class SocialLoginButton extends StatelessWidget {
   final String label;
-  final String assetIconEmoji; // ใช้ emoji แทนโลโก้จริงชั่วคราว
+  final String? assetIconEmoji;
+  final Widget? icon;
   final VoidCallback? onPressed;
 
   const SocialLoginButton({
     super.key,
     required this.label,
-    required this.assetIconEmoji,
+    this.assetIconEmoji,
+    this.icon,
     required this.onPressed,
   });
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 54,
+      height: 52,
       child: OutlinedButton(
         onPressed: onPressed,
+        style: OutlinedButton.styleFrom(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          side: BorderSide(color: AppColors.divider, width: 1.2),
+        ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(assetIconEmoji, style: const TextStyle(fontSize: 18)),
-            const SizedBox(width: 10),
+            if (icon != null) ...[
+              icon!,
+              const SizedBox(width: 10),
+            ] else if (assetIconEmoji != null) ...[
+              Text(assetIconEmoji!, style: const TextStyle(fontSize: 18)),
+              const SizedBox(width: 10),
+            ] else ...[
+              Container(
+                width: 22,
+                height: 22,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: AppColors.background,
+                ),
+                child: const Text(
+                  'G',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w900,
+                    color: Color(0xFF4285F4),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+            ],
             Text(
               label,
               style: TextStyle(
-                fontSize: 15,
+                fontSize: 14.5,
                 fontWeight: FontWeight.w600,
                 color: AppColors.textPrimary,
               ),

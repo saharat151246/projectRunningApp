@@ -25,13 +25,16 @@ function toPublicUser(user) {
     height: user.height,
     age: user.age,
     gender: user.gender,
+    medical_condition: user.medical_condition,
+    level: user.level,
+    goal: user.goal,
   };
 }
 
 // POST /api/auth/register
 exports.register = async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password, weight, height, age, medical_condition, level, goal } = req.body;
 
     if (!name || !email || !password) {
       return res.status(400).json({ message: 'กรุณากรอกชื่อ, อีเมล และรหัสผ่านให้ครบ' });
@@ -48,10 +51,16 @@ exports.register = async (req, res) => {
     const password_hash = await bcrypt.hash(password, 10);
 
     const user = await User.create({
-      name,
-      email: email.toLowerCase(),
+      name: name.toString().trim(),
+      email: email.toLowerCase().trim(),
       password_hash,
       auth_provider: 'email',
+      weight: weight !== undefined && weight !== null && !isNaN(weight) ? Number(weight) : null,
+      height: height !== undefined && height !== null && !isNaN(height) ? Number(height) : null,
+      age: age !== undefined && age !== null && !isNaN(age) ? Number(age) : null,
+      medical_condition: medical_condition ? medical_condition.toString().trim() : '',
+      level: level ? level.toString().trim() : 'คนทั่วไป',
+      goal: goal ? goal.toString().trim() : 'เพื่อสุขภาพ',
     });
 
     const token = signToken(user);
@@ -192,6 +201,15 @@ exports.updateProfile = async (req, res) => {
     }
     if (gender !== undefined && gender !== null) {
       user.gender = gender;
+    }
+    if (medical_condition !== undefined) {
+      user.medical_condition = medical_condition ? medical_condition.toString().trim() : '';
+    }
+    if (level !== undefined && level) {
+      user.level = level.toString().trim();
+    }
+    if (goal !== undefined && goal) {
+      user.goal = goal.toString().trim();
     }
     if (avatar_url !== undefined) {
       user.avatar_url = avatar_url;

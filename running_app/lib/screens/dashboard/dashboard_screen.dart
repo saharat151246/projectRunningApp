@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../../theme/app_theme.dart';
 import '../../services/run_service.dart';
+import '../../services/language_controller.dart';
 import '../history/run_detail_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -44,29 +45,27 @@ class _DashboardScreenState extends State<DashboardScreen> {
     if (minPerKm == null || minPerKm <= 0) return '--:--';
     final m = minPerKm.floor();
     final s = ((minPerKm - m) * 60).round();
-    return '$m:${s.toString().padLeft(2, '0')} /กม.';
+    final lang = LanguageController.instance;
+    return '$m:${s.toString().padLeft(2, '0')} ${lang.perKm}';
   }
 
-  String _formatDate(DateTime d) {
-    const months = [
-      'ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.',
-      'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'
-    ];
-    final buddhistYear = d.year + 543;
-    return '${d.day} ${months[d.month - 1]} $buddhistYear';
-  }
+  String _formatDate(DateTime d) =>
+      LanguageController.instance.formatDate(d);
 
   String _weekdayLabel(String dateKey) {
     if (dateKey.isEmpty) return '';
     final d = DateTime.parse(dateKey);
-    const labels = ['จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส', 'อา'];
-    return labels[d.weekday - 1];
+    return LanguageController.instance.weekdayLabel(d.weekday);
   }
 
   @override
   Widget build(BuildContext context) {
+    final lang = LanguageController.instance;
     final summary = _summary ?? RunSummary.empty();
 
+    return AnimatedBuilder(
+      animation: lang,
+      builder: (context, _) {
     return RefreshIndicator(
       color: AppColors.primary,
       onRefresh: _load,
@@ -78,10 +77,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('สถิติของฉัน',
-                      style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800)),
+                  Text(lang.text('สถิติของฉัน', 'My Statistics'),
+                      style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w800)),
                   const SizedBox(height: 4),
-                  Text('ภาพรวมความก้าวหน้าการวิ่งทั้งหมด',
+                  Text(lang.text('ภาพรวมความก้าวหน้าการวิ่งทั้งหมด', 'Overview of your running progress'),
                       style: TextStyle(color: AppColors.textSecondary, fontSize: 13, fontWeight: FontWeight.w600)),
                   const SizedBox(height: 24),
                   if (_loading)
@@ -163,8 +162,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       ),
                     ),
                     const SizedBox(height: 28),
-                    const Text('ประวัติการวิ่งทั้งหมด',
-                        style: TextStyle(fontWeight: FontWeight.w800, fontSize: 17)),
+                    Text(lang.text('ประวัติการวิ่งทั้งหมด', 'All Run History'),
+                        style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 17)),
                     const SizedBox(height: 12),
                     if (_runs.isEmpty)
                       Container(
@@ -174,7 +173,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Center(
-                          child: Text('ยังไม่มีประวัติการวิ่ง',
+                          child: Text(lang.text('ยังไม่มีประวัติการวิ่ง', 'No run history yet'),
                               style: TextStyle(color: AppColors.textSecondary, fontSize: 13, fontWeight: FontWeight.w600)),
                         ),
                       ),
@@ -184,8 +183,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
           ),
           // รายการประวัติการวิ่ง - ใช้ SliverList.builder แทนการสร้าง widget ของทุกรายการล่วงหน้า
-          // (เดิมใช้ ..._runs.map(...) ใน ListView เดียว ทำให้พอประวัติสะสมเยอะขึ้นเรื่อยๆ
-          // จะยิ่งกิน memory และหน่วงตอนเปิดหน้านี้ เพราะสร้าง widget ของทุกรายการตั้งแต่แรกทั้งที่ยังไม่เห็นบนจอ)
           if (!_loading && _runs.isNotEmpty)
             SliverPadding(
               padding: const EdgeInsets.fromLTRB(20, 0, 20, 100),
@@ -199,9 +196,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ],
       ),
     );
+      },
+    );
   }
 
   Widget _runTile(RunItem run) {
+    final lang = LanguageController.instance;
     return Dismissible(
       key: Key(run.id),
       direction: DismissDirection.endToStart,
@@ -210,21 +210,25 @@ class _DashboardScreenState extends State<DashboardScreen> {
           context: context,
           builder: (dialogContext) => AlertDialog(
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            title: const Row(
+            title: Row(
               children: [
-                Icon(Icons.delete_outline_rounded, color: Color(0xFFE82A2A)),
-                SizedBox(width: 8),
-                Text('ลบประวัติการวิ่ง', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                const Icon(Icons.delete_outline_rounded, color: Color(0xFFE82A2A)),
+                const SizedBox(width: 8),
+                Text(lang.text('ลบประวัติการวิ่ง', 'Delete Run'),
+                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               ],
             ),
-            content: const Text(
-              'คุณต้องการลบรายการวิ่งนี้ใช่หรือไม่? ข้อมูลประวัติและสถิติของกิจกรรมนี้จะถูกลบออกจากระบบและไม่สามารถกู้คืนได้',
-              style: TextStyle(fontSize: 14, height: 1.4),
+            content: Text(
+              lang.text(
+                'คุณต้องการลบรายการวิ่งนี้ใช่หรือไม่? ข้อมูลประวัติและสถิติของกิจกรรมนี้จะถูกลบออกจากระบบและไม่สามารถกู้คืนได้',
+                'Are you sure you want to delete this run? This action cannot be undone.',
+              ),
+              style: const TextStyle(fontSize: 14, height: 1.4),
             ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(dialogContext, false),
-                child: Text('ยกเลิก', style: TextStyle(color: AppColors.textSecondary)),
+                child: Text(lang.text('ยกเลิก', 'Cancel'), style: TextStyle(color: AppColors.textSecondary)),
               ),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
@@ -233,7 +237,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   minimumSize: const Size(100, 44),
                 ),
                 onPressed: () => Navigator.pop(dialogContext, true),
-                child: const Text('ลบรายการ'),
+                child: Text(lang.text('ลบรายการ', 'Delete')),
               ),
             ],
           ),
@@ -244,12 +248,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
         if (mounted) {
           if (result.success) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('ลบประวัติการวิ่งเรียบร้อยแล้ว')),
+              SnackBar(content: Text(lang.text('ลบประวัติการวิ่งเรียบร้อยแล้ว', 'Run deleted successfully'))),
             );
             _load();
           } else {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(result.errorMessage ?? 'ไม่สามารถลบรายการได้')),
+              SnackBar(content: Text(result.errorMessage ?? lang.text('ไม่สามารถลบรายการได้', 'Failed to delete'))),
             );
             _load();
           }
@@ -306,7 +310,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             fontWeight: FontWeight.w800, fontSize: 14.5)),
                     const SizedBox(height: 4),
                     Text(
-                      '${run.distanceKm.toStringAsFixed(2)} กม. • ${_formatDuration(run.durationSec)} • ${_formatPace(run.avgPace)}',
+                      '${run.distanceKm.toStringAsFixed(2)} ${lang.km} • ${_formatDuration(run.durationSec)} • ${_formatPace(run.avgPace)}',
                       style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,

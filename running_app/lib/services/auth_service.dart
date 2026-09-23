@@ -47,13 +47,29 @@ class AuthService extends ChangeNotifier {
     required String name,
     required String email,
     required String password,
+    double? weight,
+    double? height,
+    int? age,
+    String? medicalCondition,
+    String? level,
+    String? goal,
   }) async {
     try {
       final res = await http
           .post(
             Uri.parse('${ApiConfig.baseUrl}/auth/register'),
             headers: {'Content-Type': 'application/json'},
-            body: jsonEncode({'name': name, 'email': email, 'password': password}),
+            body: jsonEncode({
+              'name': name,
+              'email': email,
+              'password': password,
+              if (weight != null) 'weight': weight,
+              if (height != null) 'height': height,
+              if (age != null) 'age': age,
+              if (medicalCondition != null) 'medical_condition': medicalCondition,
+              if (level != null) 'level': level,
+              if (goal != null) 'goal': goal,
+            }),
           )
           .timeout(const Duration(seconds: 12));
 
@@ -172,6 +188,9 @@ class AuthService extends ChangeNotifier {
     double? weight,
     double? height,
     int? age,
+    String? medicalCondition,
+    String? level,
+    String? goal,
     String? avatarUrl,
   }) async {
     if (_token == null) {
@@ -190,6 +209,9 @@ class AuthService extends ChangeNotifier {
               if (weight != null) 'weight': weight,
               if (height != null) 'height': height,
               if (age != null) 'age': age,
+              if (medicalCondition != null) 'medical_condition': medicalCondition,
+              if (level != null) 'level': level,
+              if (goal != null) 'goal': goal,
               if (avatarUrl != null) 'avatar_url': avatarUrl,
             }),
           )

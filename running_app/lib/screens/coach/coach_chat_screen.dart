@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../theme/app_theme.dart';
 import '../../services/coach_service.dart';
+import '../../services/language_controller.dart';
 
 /// หน้าคุยกับ AI Coach - ถามตอบเรื่องการออกกำลังกาย/การวิ่ง
 class CoachChatScreen extends StatefulWidget {
@@ -19,8 +20,12 @@ class _CoachChatScreenState extends State<CoachChatScreen> {
   @override
   void initState() {
     super.initState();
+    final lang = LanguageController.instance;
     _messages.add(ChatMessage(
-      text: 'สวัสดีครับ 👋 ผมคือ AI Coach ถามอะไรเกี่ยวกับการออกกำลังกาย การวิ่ง หรือการฝึกซ้อมได้เลยครับ',
+      text: lang.text(
+        'สวัสดีครับ 👋 ผมคือ AI Coach ถามอะไรเกี่ยวกับการออกกำลังกาย การวิ่ง หรือการฝึกซ้อมได้เลยครับ',
+        'Hello! 👋 I am your AI Coach. Feel free to ask me anything about exercise, running, or training.',
+      ),
       isUser: false,
     ));
   }
@@ -77,36 +82,42 @@ class _CoachChatScreenState extends State<CoachChatScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(
-        backgroundColor: AppColors.background,
-        title: Row(
-          children: [
-            Icon(Icons.psychology_alt_rounded, color: AppColors.accent, size: 22),
-            SizedBox(width: 8),
-            Text('AI Coach'),
-          ],
-        ),
-      ),
-      body: Column(
-        children: [
-          Expanded(
-            child: ListView.builder(
-              controller: _scrollCtrl,
-              padding: const EdgeInsets.all(16),
-              itemCount: _messages.length + (_sending ? 1 : 0),
-              itemBuilder: (context, index) {
-                if (index == _messages.length) {
-                  return _buildTypingIndicator();
-                }
-                return _buildBubble(_messages[index]);
-              },
+    return AnimatedBuilder(
+      animation: LanguageController.instance,
+      builder: (context, _) {
+        final lang = LanguageController.instance;
+        return Scaffold(
+          backgroundColor: AppColors.background,
+          appBar: AppBar(
+            backgroundColor: AppColors.background,
+            title: Row(
+              children: [
+                Icon(Icons.psychology_alt_rounded, color: AppColors.accent, size: 22),
+                const SizedBox(width: 8),
+                Text(lang.text('AI โค้ช', 'AI Coach')),
+              ],
             ),
           ),
-          _buildInputBar(),
-        ],
-      ),
+          body: Column(
+            children: [
+              Expanded(
+                child: ListView.builder(
+                  controller: _scrollCtrl,
+                  padding: const EdgeInsets.all(16),
+                  itemCount: _messages.length + (_sending ? 1 : 0),
+                  itemBuilder: (context, index) {
+                    if (index == _messages.length) {
+                      return _buildTypingIndicator();
+                    }
+                    return _buildBubble(_messages[index]);
+                  },
+                ),
+              ),
+              _buildInputBar(lang),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -166,7 +177,7 @@ class _CoachChatScreenState extends State<CoachChatScreen> {
     );
   }
 
-  Widget _buildInputBar() {
+  Widget _buildInputBar(LanguageController lang) {
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
       decoration: BoxDecoration(
@@ -185,7 +196,7 @@ class _CoachChatScreenState extends State<CoachChatScreen> {
                 textInputAction: TextInputAction.send,
                 onSubmitted: (_) => _send(),
                 decoration: InputDecoration(
-                  hintText: 'ถามเรื่องการออกกำลังกาย...',
+                  hintText: lang.text('ถามเรื่องการออกกำลังกาย...', 'Ask about workouts, running...'),
                   filled: true,
                   fillColor: AppColors.background,
                   contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),

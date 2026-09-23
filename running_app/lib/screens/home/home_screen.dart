@@ -6,6 +6,7 @@ import '../../services/stats_service.dart';
 import '../../services/run_service.dart';
 import '../../services/auth_service.dart';
 import '../../services/coach_service.dart';
+import '../../services/language_controller.dart';
 import '../../widgets/overtraining_warning_card.dart';
 import '../../widgets/daily_plan_card.dart';
 import '../coach/coach_chat_screen.dart';
@@ -66,27 +67,24 @@ class _HomeScreenState extends State<HomeScreen> {
     return '$m:$s';
   }
 
-  String _formatDate(DateTime d) {
-    const months = [
-      'ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.',
-      'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'
-    ];
-    final buddhistYear = d.year + 543;
-    return '${d.day} ${months[d.month - 1]} $buddhistYear';
-  }
+  String _formatDate(DateTime d) =>
+      LanguageController.instance.formatDate(d);
 
   String _weekdayLabel(String dateKey) {
     if (dateKey.isEmpty) return '';
     final d = DateTime.parse(dateKey);
-    const labels = ['จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส', 'อา'];
-    return labels[d.weekday - 1];
+    return LanguageController.instance.weekdayLabel(d.weekday);
   }
 
   @override
   Widget build(BuildContext context) {
+    final lang = LanguageController.instance;
     final summary = _summary ?? RunSummary.empty();
-    final userName = AuthService.instance.currentUser?['name'] as String? ?? 'นักวิ่ง';
+    final userName = AuthService.instance.currentUser?['name'] as String? ?? lang.text('นักวิ่ง', 'Runner');
 
+    return AnimatedBuilder(
+      animation: lang,
+      builder: (context, _) {
     return RefreshIndicator(
       color: AppColors.primary,
       onRefresh: () => Future.wait([_load(), _loadCoach()]),
@@ -99,7 +97,7 @@ class _HomeScreenState extends State<HomeScreen> {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('ยินดีต้อนรับ',
+                  Text(lang.text('ยินดีต้อนรับ', 'Welcome'),
                       style: TextStyle(color: AppColors.textSecondary, fontSize: 13, fontWeight: FontWeight.w600)),
                   const SizedBox(height: 2),
                   Text(userName,
@@ -155,9 +153,9 @@ class _HomeScreenState extends State<HomeScreen> {
                       children: [
                         Expanded(
                           child: StatCard(
-                            label: 'ระยะทางรวม',
+                            label: lang.text('ระยะทางรวม', 'Total Distance'),
                             value: summary.totalDistanceKm.toStringAsFixed(1),
-                            unit: 'กม.',
+                            unit: lang.km,
                             icon: Icons.map_outlined,
                             color: AppColors.primary,
                           ),
@@ -165,9 +163,9 @@ class _HomeScreenState extends State<HomeScreen> {
                         const SizedBox(width: 12),
                         Expanded(
                           child: StatCard(
-                            label: 'จำนวนครั้งที่วิ่ง',
+                            label: lang.text('จำนวนครั้งที่วิ่ง', 'Total Runs'),
                             value: '${summary.totalRuns}',
-                            unit: 'ครั้ง',
+                            unit: lang.runs,
                             icon: Icons.repeat_rounded,
                             color: AppColors.accent,
                           ),
@@ -179,9 +177,9 @@ class _HomeScreenState extends State<HomeScreen> {
                       children: [
                         Expanded(
                           child: StatCard(
-                            label: 'แต้มสะสม',
+                            label: lang.text('แต้มสะสม', 'Total Points'),
                             value: '${localStats.totalPoints}',
-                            unit: 'pt',
+                            unit: lang.pts,
                             icon: Icons.star_rounded,
                             color: AppColors.gold,
                           ),
@@ -189,9 +187,9 @@ class _HomeScreenState extends State<HomeScreen> {
                         const SizedBox(width: 12),
                         Expanded(
                           child: StatCard(
-                            label: 'วิ่งต่อเนื่อง',
+                            label: lang.text('วิ่งต่อเนื่อง', 'Streak'),
                             value: '${localStats.currentStreakDays}',
-                            unit: 'วัน',
+                            unit: lang.days,
                             icon: Icons.local_fire_department_rounded,
                             color: const Color(0xFFFF6B6B),
                           ),
@@ -204,8 +202,8 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
 
             const SizedBox(height: 28),
-            const Text('สรุประยะทาง 7 วันล่าสุด',
-                style: TextStyle(fontWeight: FontWeight.w800, fontSize: 17)),
+            Text(lang.text('สรุประยะทาง 7 วันล่าสุด', 'Last 7 Days Distance'),
+                style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 17)),
             const SizedBox(height: 14),
             Container(
               height: 160,
@@ -302,7 +300,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('สรุปสภาพร่างกายวันนี้',
+                          Text(lang.text('สรุปสภาพร่างกายวันนี้', 'Today\'s Overview'),
                               style: TextStyle(
                                   color: AppColors.textPrimary,
                                   fontWeight: FontWeight.w800,
@@ -320,7 +318,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                   ),
                                 ),
                                 const SizedBox(width: 8),
-                                Text('กำลังดูข้อมูลการวิ่งของคุณ...',
+                                Text(lang.text('กำลังดูข้อมูลการวิ่งของคุณ...', 'Loading your running data...'),
                                     style: TextStyle(
                                         color: AppColors.textSecondary, fontSize: 12.5)),
                               ],
@@ -329,7 +327,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             Text(
                               (_coach?.advice.isNotEmpty ?? false)
                                   ? _coach!.advice
-                                  : 'ยังไม่มีคำแนะนำ ลองวิ่งดูสักครั้งแล้วกลับมาดูอีกที',
+                                  : lang.text('ยังไม่มีคำแนะนำ ลองวิ่งดูสักครั้งแล้วกลับมาดูอีกที', 'No advice yet. Try your first run and come back!'),
                               style: TextStyle(
                                 color: AppColors.textPrimary.withValues(alpha: 0.85),
                                 fontSize: 13,
@@ -338,7 +336,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               ),
                             ),
                           const SizedBox(height: 8),
-                          Text('ดูรายละเอียดเพิ่มเติม',
+                          Text(lang.text('ดูรายละเอียดเพิ่มเติม', 'View details'),
                               style: TextStyle(
                                   color: AppColors.primary,
                                   fontSize: 12,
@@ -352,11 +350,11 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
 
             const SizedBox(height: 28),
-            const Row(
+            Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('การวิ่งล่าสุด',
-                    style: TextStyle(fontWeight: FontWeight.w800, fontSize: 17)),
+                Text(lang.text('การวิ่งล่าสุด', 'Recent Runs'),
+                    style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 17)),
               ],
             ),
             const SizedBox(height: 12),
@@ -369,7 +367,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   border: Border.all(color: AppColors.divider),
                 ),
                 child: Center(
-                  child: Text('ยังไม่มีประวัติการวิ่ง เริ่มต้นการวิ่งครั้งแรกของคุณวันนี้',
+                  child: Text(lang.text('ยังไม่มีประวัติการวิ่ง เริ่มต้นการวิ่งครั้งแรกของคุณวันนี้', 'No run history yet. Start your first run today!'),
                       style: TextStyle(color: AppColors.textSecondary, fontSize: 13, fontWeight: FontWeight.w600)),
                 ),
               )
@@ -412,7 +410,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                  '${run.distanceKm.toStringAsFixed(2)} กม. • ${_formatDuration(run.durationSec)}',
+                                  '${run.distanceKm.toStringAsFixed(2)} ${lang.km} • ${_formatDuration(run.durationSec)}',
                                   style: const TextStyle(
                                       fontWeight: FontWeight.w800, fontSize: 14.5)),
                               const SizedBox(height: 2),
@@ -432,6 +430,8 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ],
       ),
+    );
+      },
     );
   }
 }
